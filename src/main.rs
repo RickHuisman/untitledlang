@@ -1,3 +1,8 @@
+use crate::lexer::lexer::lex;
+
+mod lexer;
+
 fn main() {
-    println!("Hello, world!");
+    let tokens = lex("lex x = 10;").unwrap();
+    println!("{:?}", tokens);
 }
