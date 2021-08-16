@@ -3,7 +3,7 @@ use crate::parser::ast::*;
 use crate::parser::error::ParserError;
 use crate::parser::expr_parser;
 
-type Result<T> = std::result::Result<T, ParserError>;
+type Result<'a, T> = std::result::Result<T, ParserError>;
 
 pub fn parse<'a>(tokens: &'a mut Vec<Token<'a>>) -> Result<ModuleAst> {
     let mut parser = Parser::new(tokens);

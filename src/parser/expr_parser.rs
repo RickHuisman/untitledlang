@@ -86,7 +86,6 @@ fn parse_infix(parser: &mut Parser, left: Expr) -> Result<Expr> {
         | TokenType::Minus
         | TokenType::Star
         | TokenType::Slash => parse_binary(parser, left),
-        // TokenType::Equal => parse_assign(parser, left), TODO
         _ => todo!(),
         // _ => Err(SyntaxError::Unexpected(parser.peek_token().clone())),
     }
@@ -108,8 +107,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr> {
                 Expr::let_get(ident)
             })
         }
-        //_ => Err(ParserError::ExpectedPrimary(tc.clone())), TODO
-        _ => todo!(),
+        _ => Err(ParserError::ExpectedPrimary(token.token_type().clone())),
     }
 }
 
