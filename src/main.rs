@@ -1,10 +1,11 @@
-use crate::lexer::lexer::lex;
-use crate::parser::parser::parse;
 use std::io;
 use std::borrow::BorrowMut;
+use crate::vm::vm::interpret;
 
 mod lexer;
 mod parser;
+mod compiler;
+mod vm;
 
 fn main() {
     run_repl();
@@ -12,10 +13,7 @@ fn main() {
 
 pub fn run_repl() {
     loop {
-        let line = read_line();
-        let mut tokens = lex(&line).unwrap();
-        let ast = parse(&mut tokens).unwrap();
-        println!("{:?}", ast);
+        interpret(&read_line());
     }
 }
 
