@@ -103,7 +103,7 @@ impl<'a> Lexer<'a> {
                 }
             }
             '"' => self.string()?,
-            _ => todo!(),
+            _ => todo!(), // TODO: ???
         };
 
         Ok(self.make_token(token_type, start))
@@ -232,7 +232,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn tokenize_numbers() {
+    fn lex_numbers() {
         let expect = vec![
             Token::new(TokenType::Number, "2", Position::new(0, 1, 1)),
             Token::new(TokenType::Number, "10", Position::new(2, 4, 1)),
@@ -242,12 +242,12 @@ mod tests {
 
         let source = r#"2 10 3.33"#;
 
-        let actual = tokenize(source).unwrap();
+        let actual = lex(source).unwrap();
         assert_eq!(expect, actual);
     }
 
     #[test]
-    fn tokenize_strings() {
+    fn lex_strings() {
         let expect = vec![
             Token::new(TokenType::String, "\"Hello\"", Position::new(0, 7, 1)),
             Token::new(TokenType::String, "\",\"", Position::new(8, 11, 1)),
@@ -257,12 +257,12 @@ mod tests {
 
         let source = r#""Hello" "," "World!""#;
 
-        let actual = tokenize(source).unwrap();
+        let actual = lex(source).unwrap();
         assert_eq!(expect, actual);
     }
 
     #[test]
-    fn tokenize_keywords() {
+    fn lex_keywords() {
         let expect = vec![
             Token::new(
                 TokenType::Keyword(Keyword::Let),
@@ -270,63 +270,19 @@ mod tests {
                 Position::new(0, 3, 1),
             ),
             Token::new(TokenType::Line, "", Position::new(3, 3, 2)),
-            Token::new(
-                TokenType::Keyword(Keyword::For),
-                "for",
-                Position::new(16, 19, 2),
-            ),
-            Token::new(TokenType::Line, "", Position::new(19, 19, 3)),
-            Token::new(
-                TokenType::Keyword(Keyword::While),
-                "while",
-                Position::new(32, 37, 3),
-            ),
-            Token::new(TokenType::Line, "", Position::new(37, 37, 4)),
-            Token::new(TokenType::Identifier, "x", Position::new(50, 51, 4)),
-            Token::new(TokenType::EOF, "", Position::new(51, 51, 4)),
+            Token::new(TokenType::Identifier, "x", Position::new(16, 17, 2)),
+            Token::new(TokenType::EOF, "", Position::new(17, 17, 2)),
         ];
 
         let source = r#"let
-            for
-            while
             x"#;
 
-        let actual = tokenize(source).unwrap();
+        let actual = lex(source).unwrap();
         assert_eq!(expect, actual);
     }
 
     #[test]
-    fn tokenize_function() {
-        let expect = vec![
-            Token::new(
-                TokenType::Keyword(Keyword::Def),
-                "def",
-                Position::new(0, 3, 1),
-            ),
-            Token::new(TokenType::Identifier, "foobar", Position::new(4, 10, 1)),
-            Token::new(TokenType::LeftParen, "(", Position::new(10, 11, 1)),
-            Token::new(TokenType::Identifier, "x", Position::new(11, 12, 1)),
-            Token::new(TokenType::Comma, ",", Position::new(12, 13, 1)),
-            Token::new(TokenType::Identifier, "y", Position::new(14, 15, 1)),
-            Token::new(TokenType::RightParen, ")", Position::new(15, 16, 1)),
-            Token::new(TokenType::Line, "", Position::new(16, 16, 2)),
-            Token::new(
-                TokenType::Keyword(Keyword::End),
-                "end",
-                Position::new(29, 32, 2),
-            ),
-            Token::new(TokenType::EOF, "", Position::new(32, 32, 2)),
-        ];
-
-        let source = r#"def foobar(x, y)
-            end"#;
-
-        let actual = tokenize(source).unwrap();
-        assert_eq!(expect, actual);
-    }
-
-    #[test]
-    fn tokenize_lines() {
+    fn lex_lines() {
         let expect = vec![
             Token::new(
                 TokenType::Keyword(Keyword::Let),
@@ -351,7 +307,7 @@ mod tests {
         let source = r#"let x = 3
             let y = 5"#;
 
-        let actual = tokenize(source).unwrap();
+        let actual = lex(source).unwrap();
         assert_eq!(expect, actual);
     }
 }
