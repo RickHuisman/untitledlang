@@ -2,12 +2,27 @@ use crate::lexer::lexer::lex;
 use crate::parser::parser::parse;
 use std::io;
 use std::borrow::BorrowMut;
+use crate::hm::syntax::Syntax::Lambda;
+use crate::hm::syntax::*;
+use crate::hm::infer::analyse;
+use std::collections::{HashSet, HashMap};
+use crate::hm::env::Env;
+use crate::hm::types::TypeVarGenerator;
 
 mod lexer;
 mod parser;
+mod hm;
 
 fn main() {
-    run_repl();
+    let (mut a, env) = Env::new();
+
+    let syntax = let_("f", lambda("x", ident("x")), ident("5"));
+
+    let t = analyse(&syntax, &mut a, &env, &HashSet::new());
+
+    println!("{}", (a[t].as_string(&a, &mut TypeVarGenerator::new())));
+
+    // run_repl();
 }
 
 pub fn run_repl() {
