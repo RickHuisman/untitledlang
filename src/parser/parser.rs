@@ -29,9 +29,7 @@ impl<'a> Parser<'a> {
     fn parse_top_level_expr(&mut self) -> Result<Expr> {
         match self.peek_type()? {
             TokenType::Keyword(Keyword::Let) => self.declare_let(),
-            TokenType::LeftBrace => {
-                Ok(Expr::Block(self.parse_block()?))
-            }
+            TokenType::LeftBrace => self.parse_block(),
             _ => self.parse_expression_statement(),
         }
     }
@@ -49,22 +47,15 @@ impl<'a> Parser<'a> {
             Expr::Literal(LiteralExpr::Nil)
         };
 
-        Ok(Expr::LetAssign(LetAssignExpr::new(
-            ident,
-            Box::new(initializer),
-        )))
+        Ok(Expr::let_assign(ident, initializer))
     }
 
-    fn parse_block(&mut self) -> Result<BlockExpr> {
-        // Consume '{'.
-        self.expect(TokenType::LeftBrace);
+    fn parse_block(&mut self) -> Result<Expr> {
+        Ok(Expr::block(self.block()?))
+    }
 
-        let mut exprs = vec![];
-        while !self.match_(&TokenType::RightBrace)? {
-            exprs.push(self.parse_top_level_expr()?);
-        }
-
-        Ok(BlockExpr::new(exprs))
+    pub fn parse_ident(&mut self) -> Result<Identifier> {
+        Ok(self.expect(TokenType::Identifier)?.source().to_string())
     }
 
     pub fn parse_expression_statement(&mut self) -> Result<Expr> {
@@ -73,8 +64,16 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    pub fn parse_ident(&mut self) -> Result<Identifier> {
-        Ok(self.expect(TokenType::Identifier)?.source().to_string())
+    fn block(&mut self) -> Result<Vec<Expr>> {
+        // Consume '{'.
+        self.expect(TokenType::LeftBrace)?;
+
+        let mut exprs = vec![];
+        while !self.match_(&TokenType::RightBrace)? {
+            exprs.push(self.parse_top_level_expr()?);
+        }
+
+        Ok(exprs)
     }
 
     pub fn expression(&mut self) -> Result<Expr> {
@@ -83,14 +82,30 @@ impl<'a> Parser<'a> {
 
     pub fn expect(&mut self, expect: TokenType) -> Result<Token<'a>> {
         if self.check(&expect)? {
-            Ok(self.consume()?)
-        } else {
-            Err(ParserError::Expect(
-                expect,
-                self.peek_type()?.clone(), // TODO Clone
-                self.peek().unwrap().position().line().clone(), // TODO Clone
-            ))
+            return Ok(self.consume()?)
         }
+
+        Err(ParserError::Expect(
+            expect,
+            self.peek_type()?.clone(), // TODO Clone
+            self.peek()?.position().line().clone(), // TODO Clone
+        ))
+    }
+
+    pub fn consume(&mut self) -> Result<Token<'a>> {
+        self.tokens
+            .pop()
+            .ok_or(ParserError::UnexpectedEOF)
+    }
+
+    fn peek(&self) -> Result<&Token<'a>> {
+        self.tokens
+            .last()
+            .ok_or(ParserError::UnexpectedEOF)
+    }
+
+    pub fn peek_type(&self) -> Result<&TokenType> {
+        Ok(self.peek()?.token_type())
     }
 
     pub fn match_(&mut self, token_type: &TokenType) -> Result<bool> {
@@ -104,22 +119,6 @@ impl<'a> Parser<'a> {
 
     fn check(&self, token_type: &TokenType) -> Result<bool> {
         Ok(self.peek_type()? == token_type)
-    }
-
-    pub fn consume(&mut self) -> Result<Token<'a>> {
-        self.tokens
-            .pop()
-            .ok_or(ParserError::UnexpectedEOF)
-    }
-
-    pub fn peek_type(&self) -> Result<&TokenType> {
-        Ok(self.peek()?.token_type())
-    }
-
-    fn peek(&self) -> Result<&Token<'a>> {
-        self.tokens
-            .last()
-            .ok_or(ParserError::UnexpectedEOF)
     }
 
     pub fn is_eof(&self) -> Result<bool> {
@@ -141,10 +140,10 @@ mod tests {
 
     #[test]
     fn parse_assign_let() {
-        let expect = vec![Expr::LetAssign(LetAssignExpr::new(
+        let expect = vec![Expr::let_assign(
             "x".to_string(),
-            Box::new(Expr::Literal(LiteralExpr::Number(5.0))),
-        ))];
+            Expr::Literal(LiteralExpr::Number(5.0)),
+        )];
 
         let source = "let x = 5;";
         run_test(expect, source);
@@ -152,10 +151,10 @@ mod tests {
 
     #[test]
     fn parse_set_let() {
-        let expect = vec![Expr::LetSet(LetSetExpr::new(
+        let expect = vec![Expr::let_set(
             "x".to_string(),
-            Box::new(Expr::Literal(LiteralExpr::Number(5.0))),
-        ))];
+            Expr::Literal(LiteralExpr::Number(5.0)),
+        )];
 
         let source = "x = 5;";
         run_test(expect, source);
@@ -164,16 +163,14 @@ mod tests {
     #[test]
     fn parse_get_let() {
         let expect = vec![
-            Expr::LetAssign(LetAssignExpr::new(
+            Expr::let_assign(
                 "x".to_string(),
-                Box::new(Expr::Literal(LiteralExpr::Number(5.0))),
-            )),
-            Expr::LetAssign(LetAssignExpr::new(
+                Expr::Literal(LiteralExpr::Number(5.0)),
+            ),
+            Expr::let_assign(
                 "y".to_string(),
-                Box::new(Expr::LetGet(LetGetExpr::new(
-                    "x".to_string(),
-                ))),
-            )),
+                Expr::let_get("x".to_string()),
+            ),
         ];
 
         let source = "let x = 5; let y = x;";
@@ -183,20 +180,16 @@ mod tests {
     #[test]
     fn parse_block() {
         let expect = vec![
-            Expr::Block(
-                BlockExpr::new(vec![
-                    Expr::LetAssign(LetAssignExpr::new(
-                        "x".to_string(),
-                        Box::new(Expr::Literal(LiteralExpr::Number(5.0))),
-                    )),
-                    Expr::LetAssign(LetAssignExpr::new(
-                        "y".to_string(),
-                        Box::new(Expr::LetGet(LetGetExpr::new(
-                            "x".to_string(),
-                        ))),
-                    )),
-                ])
-            )
+            Expr::block(vec![
+                Expr::let_assign(
+                    "x".to_string(),
+                    Expr::Literal(LiteralExpr::Number(5.0)),
+                ),
+                Expr::let_assign(
+                    "y".to_string(),
+                    Expr::let_get("x".to_string()),
+                ),
+            ])
         ];
 
         let source = r#"
@@ -211,13 +204,11 @@ mod tests {
     #[test]
     fn parse_grouping() {
         let expect = vec![
-            Expr::Grouping(
-                GroupingExpr::new(Box::new(Expr::Binary(BinaryExpr::new(
-                    Box::new(Expr::Literal(LiteralExpr::Number(2.0))),
-                    BinaryOperator::Add,
-                    Box::new(Expr::Literal(LiteralExpr::Number(4.0))),
-                )))),
-            ),
+            Expr::grouping(Expr::binary(
+                Expr::Literal(LiteralExpr::Number(2.0)),
+                BinaryOperator::Add,
+                Expr::Literal(LiteralExpr::Number(4.0)),
+            )),
         ];
 
         let source = r#"(2 + 4);"#;

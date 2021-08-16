@@ -176,10 +176,6 @@ impl<'a> Lexer<'a> {
         self.advance_while(|&c| c == ' ' || c == '\t' || c == '\n' || c == '\r');
     }
 
-    fn skip_lines(&mut self) {
-        self.advance_while(|&c| c == ';' || c == '\n' || c == '\r');
-    }
-
     fn advance_while<F>(&mut self, f: F) -> usize
         where
                 for<'r> F: Fn(&'r char) -> bool,

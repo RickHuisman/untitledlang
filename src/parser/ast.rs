@@ -5,31 +5,52 @@ pub type ModuleAst = Vec<Expr>;
 
 #[derive(PartialEq, Debug)]
 pub enum Expr {
-    Grouping(GroupingExpr),
-    Binary(BinaryExpr),
-    Unary(UnaryExpr),
-    LetAssign(LetAssignExpr),
-    LetGet(LetGetExpr),
-    LetSet(LetSetExpr),
-    Block(BlockExpr),
+    Grouping { expr: Box<Expr> },
+    Binary { left: Box<Expr>, op: BinaryOperator, right: Box<Expr> },
+    Unary { op: UnaryOperator, expr: Box<Expr> },
+    LetAssign { ident: Identifier, initializer: Box<Expr> },
+    LetGet { ident: Identifier },
+    LetSet { ident: Identifier, expr: Box<Expr> },
+    Block { exprs: Vec<Expr> },
     Literal(LiteralExpr),
 }
+
+impl Expr {
+    pub fn grouping(expr: Expr) -> Expr {
+        Expr::Grouping { expr: Box::new(expr) }
+    }
+
+    pub fn binary(left: Expr, op: BinaryOperator, right: Expr) -> Expr {
+        Expr::Binary { left: Box::new(left), op, right: Box::new(right) }
+    }
+
+    pub fn unary(op: UnaryOperator, expr: Expr) -> Expr {
+        Expr::Unary { op, expr: Box::new(expr) }
+    }
+
+    pub fn let_assign(ident: Identifier, initializer: Expr) -> Expr {
+        Expr::LetAssign { ident, initializer: Box::new(initializer) }
+    }
+
+    pub fn let_get(ident: Identifier) -> Expr {
+        Expr::LetGet { ident }
+    }
+
+    pub fn let_set(ident: Identifier, expr: Expr) -> Expr {
+        Expr::LetSet { ident, expr: Box::new(expr) }
+    }
+
+    pub fn block(exprs: Vec<Expr>) -> Expr {
+        Expr::Block { exprs }
+    }
+}
+
+pub type Identifier = String;
 
 #[derive(PartialEq, Debug)]
 pub enum LiteralExpr {
     Number(f64),
     Nil,
-}
-
-#[derive(PartialEq, Debug)]
-pub struct GroupingExpr {
-    expr: Box<Expr>,
-}
-
-impl GroupingExpr {
-    pub fn new(expr: Box<Expr>) -> Self {
-        GroupingExpr { expr }
-    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -68,19 +89,6 @@ impl BinaryOperator {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct BinaryExpr {
-    left: Box<Expr>,
-    op: BinaryOperator,
-    right: Box<Expr>,
-}
-
-impl BinaryExpr {
-    pub fn new(left: Box<Expr>, op: BinaryOperator, right: Box<Expr>) -> BinaryExpr {
-        BinaryExpr { left, op, right }
-    }
-}
-
-#[derive(PartialEq, Debug)]
 pub enum UnaryOperator {
     Negate,
     Not,
@@ -95,80 +103,3 @@ impl UnaryOperator {
         })
     }
 }
-
-#[derive(PartialEq, Debug)]
-pub struct UnaryExpr {
-    operator: UnaryOperator,
-    expr: Box<Expr>,
-}
-
-impl UnaryExpr {
-    pub fn new(operator: UnaryOperator, expr: Box<Expr>) -> UnaryExpr {
-        UnaryExpr { operator, expr }
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct LetAssignExpr {
-    pub ident: Identifier,
-    pub initializer: Box<Expr>,
-}
-
-impl LetAssignExpr {
-    pub fn new(ident: Identifier, initializer: Box<Expr>) -> Self {
-        LetAssignExpr {
-            ident,
-            initializer,
-        }
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct LetGetExpr {
-    pub ident: Identifier,
-}
-
-impl LetGetExpr {
-    pub fn new(ident: Identifier) -> Self {
-        LetGetExpr { ident }
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct LetSetExpr {
-    pub ident: Identifier,
-    pub initializer: Box<Expr>,
-}
-
-impl LetSetExpr {
-    pub fn new(ident: Identifier, initializer: Box<Expr>) -> Self {
-        LetSetExpr {
-            ident,
-            initializer,
-        }
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct BlockExpr {
-    pub exprs: Vec<Expr>,
-}
-
-impl BlockExpr {
-    pub fn new(exprs: Vec<Expr>) -> Self {
-        BlockExpr { exprs }
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct ReturnExpr {
-    pub expr: Option<Box<Expr>>,
-}
-
-impl ReturnExpr {
-    pub fn new(expr: Option<Box<Expr>>) -> Self {
-        ReturnExpr { expr }
-    }
-}
-
-pub type Identifier = String;

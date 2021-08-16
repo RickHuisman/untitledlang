@@ -87,7 +87,6 @@ fn parse_infix(parser: &mut Parser, left: Expr) -> Result<Expr> {
         | TokenType::Star
         | TokenType::Slash => parse_binary(parser, left),
         // TokenType::Equal => parse_assign(parser, left), TODO
-        // TokenType::LeftParen => parse_call(parser, left),
         _ => todo!(),
         // _ => Err(SyntaxError::Unexpected(parser.peek_token().clone())),
     }
@@ -104,10 +103,9 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr> {
 
             Ok(if parser.match_(&TokenType::Equal)? {
                 let expr = parser.expression()?;
-
-                Expr::LetSet(LetSetExpr::new(ident, Box::new(expr)))
+                Expr::let_set(ident, expr)
             } else {
-                Expr::LetGet(LetGetExpr::new(ident))
+                Expr::let_get(ident)
             })
         }
         //_ => Err(ParserError::ExpectedPrimary(tc.clone())), TODO
@@ -122,11 +120,7 @@ fn parse_binary(parser: &mut Parser, left: Expr) -> Result<Expr> {
     ).unwrap(); // TODO Unwrap
     let right = parse_expr(parser, precedence)?;
 
-    Ok(Expr::Binary(BinaryExpr::new(
-        Box::new(left),
-        operator,
-        Box::new(right),
-    )))
+    Ok(Expr::binary(left, operator, right))
 }
 
 fn parse_unary(parser: &mut Parser) -> Result<Expr> {
@@ -135,7 +129,7 @@ fn parse_unary(parser: &mut Parser) -> Result<Expr> {
     ).unwrap(); // TODO Unwrap
     let right = parse_expr(parser, Precedence::Unary)?;
 
-    Ok(Expr::Unary(UnaryExpr::new(operator, Box::new(right))))
+    Ok(Expr::unary(operator, right))
 }
 
 fn parse_grouping(parser: &mut Parser) -> Result<Expr> {
@@ -143,5 +137,5 @@ fn parse_grouping(parser: &mut Parser) -> Result<Expr> {
     let expr = parse_expr(parser, Precedence::None)?;
     parser.expect(TokenType::RightParen)?;
 
-    Ok(Expr::Grouping(GroupingExpr::new(Box::new(expr))))
+    Ok(Expr::grouping(expr))
 }
