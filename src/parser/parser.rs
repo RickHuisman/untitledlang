@@ -29,6 +29,9 @@ impl<'a> Parser<'a> {
     fn parse_top_level_expr(&mut self) -> Result<Expr> {
         match self.peek_type()? {
             TokenType::Keyword(Keyword::Let) => self.declare_let(),
+            TokenType::LeftBrace => {
+                Ok(Expr::Block(self.parse_block()?))
+            }
             _ => self.parse_expression_statement(),
         }
     }
@@ -66,7 +69,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_expression_statement(&mut self) -> Result<Expr> {
         let expr = self.expression()?;
-        self.expect(TokenType::Line)?;
+        self.expect(TokenType::Semicolon)?;
         Ok(expr)
     }
 

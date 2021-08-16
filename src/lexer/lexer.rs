@@ -60,10 +60,7 @@ impl<'a> Lexer<'a> {
             ']' => TokenType::RightBracket,
             '{' => TokenType::LeftBrace,
             '}' => TokenType::RightBrace,
-            ';' | '\n' | '\r' => {
-                self.skip_lines();
-                TokenType::Line
-            }
+            ';' => TokenType::Semicolon,
             ',' => TokenType::Comma,
             '.' => TokenType::Dot,
             '+' => TokenType::Plus,
@@ -176,7 +173,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        self.advance_while(|&c| c == ' ' || c == '\t');
+        self.advance_while(|&c| c == ' ' || c == '\t' || c == '\n' || c == '\r');
     }
 
     fn skip_lines(&mut self) {
@@ -269,43 +266,23 @@ mod tests {
                 "let",
                 Position::new(0, 3, 1),
             ),
-            Token::new(TokenType::Line, "", Position::new(3, 3, 2)),
-            Token::new(TokenType::Identifier, "x", Position::new(16, 17, 2)),
-            Token::new(TokenType::EOF, "", Position::new(17, 17, 2)),
-        ];
-
-        let source = r#"let
-            x"#;
-
-        let actual = lex(source).unwrap();
-        assert_eq!(expect, actual);
-    }
-
-    #[test]
-    fn lex_lines() {
-        let expect = vec![
-            Token::new(
-                TokenType::Keyword(Keyword::Let),
-                "let",
-                Position::new(0, 3, 1),
-            ),
             Token::new(TokenType::Identifier, "x", Position::new(4, 5, 1)),
             Token::new(TokenType::Equal, "=", Position::new(6, 7, 1)),
             Token::new(TokenType::Number, "3", Position::new(8, 9, 1)),
-            Token::new(TokenType::Line, "", Position::new(9, 9, 2)),
+            Token::new(TokenType::Semicolon, ";", Position::new(9, 10, 1)),
             Token::new(
                 TokenType::Keyword(Keyword::Let),
                 "let",
-                Position::new(22, 25, 2),
+                Position::new(11, 14, 1),
             ),
-            Token::new(TokenType::Identifier, "y", Position::new(26, 27, 2)),
-            Token::new(TokenType::Equal, "=", Position::new(28, 29, 2)),
-            Token::new(TokenType::Number, "5", Position::new(30, 31, 2)),
-            Token::new(TokenType::EOF, "", Position::new(31, 31, 2)),
+            Token::new(TokenType::Identifier, "y", Position::new(15, 16, 1)),
+            Token::new(TokenType::Equal, "=", Position::new(17, 18, 1)),
+            Token::new(TokenType::Number, "5", Position::new(19, 20, 1)),
+            Token::new(TokenType::Semicolon, ";", Position::new(20, 21, 1)),
+            Token::new(TokenType::EOF, "", Position::new(21, 21, 1)),
         ];
 
-        let source = r#"let x = 3
-            let y = 5"#;
+        let source = r#"let x = 3; let y = 5;"#;
 
         let actual = lex(source).unwrap();
         assert_eq!(expect, actual);
