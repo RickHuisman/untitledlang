@@ -1,10 +1,11 @@
 use crate::compiler::instance::CompilerInstance;
-use crate::parser::ast::{ModuleAst, Expr};
+use crate::parser::ast::ModuleAst;
 use crate::compiler::error::CompilerError;
 use crate::compiler::object::{Function, FunctionType};
 use crate::vm::opcode::Opcode;
 use crate::compiler::expr_compiler::compile_expr;
 use crate::compiler::chunk::Chunk;
+use crate::compiler::value::Value;
 
 type Result<T> = std::result::Result<T, CompilerError>;
 
@@ -46,8 +47,18 @@ impl Compiler {
         self.emit(Opcode::Return);
     }
 
+    pub fn emit_constant(&mut self, value: Value) {
+        let constant = self.current_chunk().add_constant(value);
+        self.emit(Opcode::Constant);
+        self.emit_byte(constant);
+    }
+
     pub fn emit(&mut self, opcode: Opcode) {
         self.current_chunk().write(opcode, 123); // TODO Line
+    }
+
+    pub fn emit_byte(&mut self, byte: u8) {
+        self.current_chunk().write_byte(byte);
     }
 
     pub fn current_chunk(&mut self) -> &mut Chunk {

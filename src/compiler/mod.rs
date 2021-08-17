@@ -3,6 +3,6 @@ mod instance;
 mod expr_compiler;
 pub mod chunk;
 pub mod value;
-mod object;
+pub mod object;
 mod local;
 mod error;

@@ -20,7 +20,7 @@ pub fn run_repl() {
 fn read_line() -> String {
     let mut input = String::new();
     match io::stdin().read_line(&mut input) {
-        Ok(n) => {
+        Ok(_) => {
             trim_newline(input.borrow_mut());
             input
         }

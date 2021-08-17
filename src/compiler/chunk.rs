@@ -1,7 +1,8 @@
 use crate::compiler::value::Value;
 use crate::vm::opcode::Opcode;
+use std::fmt::{Display, Formatter};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Chunk {
     name: Option<String>,
     code: Vec<u8>,
@@ -52,4 +53,95 @@ impl Chunk {
     pub fn constants(&self) -> &Vec<Value> {
         &self.constants
     }
+}
+
+impl Display for Chunk {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if let Some(name) = &self.name {
+            writeln!(f, "== <{}> chunk ==", name)?;
+        } else {
+            writeln!(f, "== chunk ==")?;
+        }
+
+        let mut offset = 0;
+        while offset < self.code.len() {
+            offset = disassemble_instruction(f, self, &mut offset);
+        }
+
+        writeln!(f, "")
+    }
+}
+
+fn disassemble_instruction(f: &mut Formatter<'_>, chunk: &Chunk, offset: &mut usize) -> usize {
+    write!(f, "{:04X}", offset);
+
+    // TODO:
+    // if *offset > 0 &&
+    //     chunk.lines[*offset] == chunk.lines[*offset - 1] {
+    //     write!(f, "   | ");
+    // } else {
+    //     write!(f, "{:4} ", chunk.lines[*offset]);
+    // }
+
+    write!(f, "   | ");
+
+    let instruction = Opcode::from(chunk.code[*offset]);
+    match instruction {
+        Opcode::Return => simple_instruction(f, "RETURN", offset),
+        Opcode::Constant => constant_instruction(chunk, f, "CONSTANT", offset),
+        Opcode::Add => simple_instruction(f, "ADD", offset),
+        Opcode::Subtract => simple_instruction(f, "SUBTRACT", offset),
+        Opcode::Multiply => simple_instruction(f, "MULTIPLY", offset),
+        Opcode::Divide => simple_instruction(f, "DIVIDE", offset),
+        Opcode::Equal => simple_instruction(f, "EQUAL", offset),
+        Opcode::Greater => simple_instruction(f, "GREATER", offset),
+        Opcode::Less => simple_instruction(f, "LESS", offset),
+        Opcode::Not => simple_instruction(f, "NOT", offset),
+    }
+}
+
+fn simple_instruction(f: &mut Formatter<'_>, name: &str, offset: &mut usize) -> usize {
+    writeln!(f, "{}", name);
+    *offset + 1
+}
+
+fn constant_instruction(
+    chunk: &Chunk,
+    f: &mut Formatter<'_>,
+    name: &str,
+    offset: &mut usize,
+) -> usize {
+    let constant = chunk.code()[*offset + 1];
+    write!(f, "{:-16} {:4} ", name, constant);
+    writeln!(f, "'{}'", chunk.constants()[constant as usize]);
+    *offset + 2
+}
+
+fn jump_instruction(
+    chunk: &Chunk,
+    f: &mut Formatter<'_>,
+    name: &str,
+    sign: usize,
+    offset: &mut usize,
+) -> usize {
+    let lo = chunk.code[*offset + 2] as u16;
+    let hi = chunk.code[*offset + 1] as u16;
+
+    let jump = lo + (hi << 8);
+
+    writeln!(
+        f,
+        "{:-16} {:4X} -> {:4X}",
+        name,
+        offset,
+        *offset + 3 + sign * jump as usize
+    );
+
+    *offset + 3
+}
+
+fn byte_instruction(chunk: &Chunk, f: &mut Formatter<'_>, name: &str, offset: &mut usize) -> usize {
+    let slot = chunk.code[*offset + 1];
+    writeln!(f, "{:-16} {:4X}", name, slot);
+    *offset + 2
 }

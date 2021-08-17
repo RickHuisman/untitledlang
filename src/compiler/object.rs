@@ -1,4 +1,7 @@
 use crate::compiler::chunk::Chunk;
+use crate::vm::obj::Gc;
+use std::fmt;
+use std::fmt::Formatter;
 
 #[derive(Clone)]
 pub enum FunctionType {
@@ -7,7 +10,18 @@ pub enum FunctionType {
     Script,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
+pub struct Closure {
+    pub fun: Gc<Function>,
+}
+
+impl Closure {
+    pub fn new(fun: Gc<Function>) -> Closure {
+        Closure { fun }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Function {
     name: String,
     chunk: Chunk,
@@ -41,5 +55,16 @@ impl Function {
 
     pub fn arity_mut(&mut self) -> &mut u8 {
         &mut self.arity
+    }
+}
+
+impl fmt::Display for Function {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        // TODO
+        // if let Some(name) = self.chunk. {
+        write!(f, "<fn {}>", self.name)
+        // } else {
+        //     write!(f, "<script>")
+        // }
     }
 }

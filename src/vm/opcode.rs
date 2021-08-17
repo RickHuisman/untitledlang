@@ -6,6 +6,10 @@ pub enum Opcode {
     Subtract,
     Multiply,
     Divide,
+    Equal,
+    Greater,
+    Less,
+    Not,
 }
 
 impl From<u8> for Opcode {
@@ -17,6 +21,10 @@ impl From<u8> for Opcode {
             0x03 => Opcode::Subtract,
             0x04 => Opcode::Multiply,
             0x05 => Opcode::Divide,
+            0x06 => Opcode::Equal,
+            0x07 => Opcode::Greater,
+            0x08 => Opcode::Less,
+            0x09 => Opcode::Not,
             _ => panic!("No opcode for byte: {}", byte), // TODO: Option?
         }
     }

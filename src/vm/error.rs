@@ -1,2 +1,6 @@
 #[derive(Debug)]
-pub enum RuntimeError {}
+pub enum RuntimeError {
+    StackEmpty,
+    FrameEmpty,
+    ReturnFromTopLevel,
+}
