@@ -29,6 +29,7 @@ impl<'a> Parser<'a> {
     fn parse_top_level_expr(&mut self) -> Result<Expr> {
         match self.peek_type()? {
             TokenType::Keyword(Keyword::Let) => self.declare_let(),
+            TokenType::Keyword(Keyword::Print) => self.parse_print(),
             TokenType::LeftBrace => self.parse_block(),
             _ => self.parse_expression_statement(),
         }
@@ -48,6 +49,12 @@ impl<'a> Parser<'a> {
         };
 
         Ok(Expr::let_assign(ident, initializer))
+    }
+
+    fn parse_print(&mut self) -> Result<Expr> {
+        self.expect(TokenType::Keyword(Keyword::Print))?;
+        let expr = self.parse_expression_statement()?;
+        Ok(Expr::print(expr))
     }
 
     fn parse_block(&mut self) -> Result<Expr> {

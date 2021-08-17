@@ -97,6 +97,7 @@ fn disassemble_instruction(f: &mut Formatter<'_>, chunk: &Chunk, offset: &mut us
         Opcode::Greater => simple_instruction(f, "GREATER", offset),
         Opcode::Less => simple_instruction(f, "LESS", offset),
         Opcode::Not => simple_instruction(f, "NOT", offset),
+        Opcode::Print => simple_instruction(f, "PRINT", offset),
     }
 }
 

@@ -17,7 +17,8 @@ pub fn compile_expr(compiler: &mut Compiler, expr: Expr) {
         Expr::LetGet { .. } => {}
         Expr::LetSet { .. } => {}
         Expr::Block { exprs } => {}
-        Expr::Literal(l) => compile_literal(compiler, l),
+        Expr::Print { expr } => compile_print(compiler, expr),
+        Expr::Literal(expr) => compile_literal(compiler, expr),
     }
 }
 
@@ -51,6 +52,11 @@ fn compile_binary(
             compiler.emit(Opcode::Not);
         }
     }
+}
+
+fn compile_print(compiler: &mut Compiler, expr: Box<Expr>) {
+    compile_expr(compiler, *expr);
+    compiler.emit(Opcode::Print);
 }
 
 fn compile_literal(compiler: &mut Compiler, literal: LiteralExpr) {

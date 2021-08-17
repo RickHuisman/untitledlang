@@ -12,6 +12,7 @@ pub enum Expr {
     LetGet { ident: Identifier },
     LetSet { ident: Identifier, expr: Box<Expr> },
     Block { exprs: Vec<Expr> },
+    Print { expr: Box<Expr> },
     Literal(LiteralExpr),
 }
 
@@ -42,6 +43,10 @@ impl Expr {
 
     pub fn block(exprs: Vec<Expr>) -> Expr {
         Expr::Block { exprs }
+    }
+
+    pub fn print(expr: Expr) -> Expr {
+        Expr::Print { expr: Box::new(expr) }
     }
 }
 

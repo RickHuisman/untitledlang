@@ -10,6 +10,7 @@ pub enum Opcode {
     Greater,
     Less,
     Not,
+    Print,
 }
 
 impl From<u8> for Opcode {
@@ -25,6 +26,7 @@ impl From<u8> for Opcode {
             0x07 => Opcode::Greater,
             0x08 => Opcode::Less,
             0x09 => Opcode::Not,
+            0x0a => Opcode::Print,
             _ => panic!("No opcode for byte: {}", byte), // TODO: Option?
         }
     }

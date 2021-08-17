@@ -29,7 +29,7 @@ pub fn interpret(source: &str) {
     };
 
     let fun = compile(ast).unwrap(); // TODO: Unwrap
-    println!("{}", fun.chunk());
+    // println!("{}", fun.chunk());
 
     let mut vm = VM::new();
 
@@ -37,7 +37,7 @@ pub fn interpret(source: &str) {
     vm.push(Value::Closure(closure));
     vm.call_value(0);
 
-    vm.run().unwrap();
+    vm.run().unwrap(); // TODO: Unwrap
 }
 
 pub struct VM {

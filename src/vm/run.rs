@@ -18,6 +18,7 @@ impl VM {
                 Opcode::Equal => self.equal()?,
                 Opcode::Not => self.not()?,
                 Opcode::Return => self.ret()?,
+                Opcode::Print => self.print()?,
             }
         }
 
@@ -94,5 +95,11 @@ impl VM {
         } else {
             Err(RuntimeError::ReturnFromTopLevel)
         }
+    }
+
+    fn print(&mut self) -> Result<()> {
+        let popped = self.pop()?;
+        println!("{:?}", popped);
+        Ok(())
     }
 }

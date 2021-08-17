@@ -70,6 +70,7 @@ pub enum TokenType {
 #[derive(Debug, PartialEq, Clone)] // TODO Clone
 pub enum Keyword {
     Let,
+    Print,
 }
 
 impl FromStr for Keyword {
@@ -78,6 +79,7 @@ impl FromStr for Keyword {
     fn from_str(source: &str) -> Result<Self, Self::Err> {
         Ok(match source {
             "let" => Keyword::Let,
+            "print" => Keyword::Print,
             _ => return Err(()),
         })
     }
