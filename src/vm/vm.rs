@@ -29,7 +29,7 @@ pub fn interpret(source: &str) {
     };
 
     let fun = compile(ast).unwrap(); // TODO: Unwrap
-    // println!("{}", fun.chunk());
+    println!("{}", fun.chunk());
 
     let mut vm = VM::new();
 

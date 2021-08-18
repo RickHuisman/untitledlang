@@ -30,6 +30,21 @@ impl Compiler {
         }
     }
 
+    pub fn begin_scope(&mut self) {
+        *self.current.scope_depth_mut() += 1;
+    }
+
+    pub fn end_scope(&mut self) {
+        *self.current.scope_depth_mut() -= 1;
+
+        while self.current.locals().len() > 0
+            && self.current.locals()[self.current.locals().len() - 1].depth()
+            > self.current.scope_depth() {
+            self.emit(Opcode::Pop);
+            self.current.locals_mut().pop();
+        }
+    }
+
     pub fn end_compiler(&mut self) -> Function {
         // TODO: Clones???
         self.emit_return();

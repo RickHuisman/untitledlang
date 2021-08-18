@@ -19,6 +19,7 @@ impl VM {
                 Opcode::Not => self.not()?,
                 Opcode::Return => self.ret()?,
                 Opcode::Print => self.print()?,
+                Opcode::Pop => { self.pop()?; }
             }
         }
 

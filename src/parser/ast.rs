@@ -1,7 +1,7 @@
 use crate::lexer::token::TokenType;
 
-// TODO: Slice?
 pub type ModuleAst = Vec<Expr>;
+pub type BlockDecl = Vec<Expr>;
 
 #[derive(PartialEq, Debug)]
 pub enum Expr {
@@ -11,7 +11,8 @@ pub enum Expr {
     LetAssign { ident: Identifier, initializer: Box<Expr> },
     LetGet { ident: Identifier },
     LetSet { ident: Identifier, expr: Box<Expr> },
-    Block { exprs: Vec<Expr> },
+    Fun { ident: Identifier, decl: FunDecl },
+    Block { block: BlockDecl },
     Print { expr: Box<Expr> },
     Literal(LiteralExpr),
 }
@@ -41,8 +42,12 @@ impl Expr {
         Expr::LetSet { ident, expr: Box::new(expr) }
     }
 
-    pub fn block(exprs: Vec<Expr>) -> Expr {
-        Expr::Block { exprs }
+    pub fn fun(ident: Identifier, decl: FunDecl) -> Expr {
+        Expr::Fun { ident, decl }
+    }
+
+    pub fn block(block: BlockDecl) -> Expr {
+        Expr::Block { block }
     }
 
     pub fn print(expr: Expr) -> Expr {
@@ -106,5 +111,21 @@ impl UnaryOperator {
             TokenType::Bang => UnaryOperator::Not,
             _ => return None,
         })
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct FunDecl {
+    params: Vec<Identifier>,
+    body: BlockDecl,
+}
+
+impl FunDecl {
+    pub fn new(params: Vec<Identifier>, body: BlockDecl) -> Self {
+        FunDecl { params, body }
+    }
+
+    pub fn body(&self) -> &BlockDecl {
+        &self.body
     }
 }

@@ -29,6 +29,7 @@ impl<'a> Parser<'a> {
     fn parse_top_level_expr(&mut self) -> Result<Expr> {
         match self.peek_type()? {
             TokenType::Keyword(Keyword::Let) => self.declare_let(),
+            TokenType::Keyword(Keyword::Fun) => self.parse_fun(),
             TokenType::Keyword(Keyword::Print) => self.parse_print(),
             TokenType::LeftBrace => self.parse_block(),
             _ => self.parse_expression_statement(),
@@ -51,18 +52,47 @@ impl<'a> Parser<'a> {
         Ok(Expr::let_assign(ident, initializer))
     }
 
+    fn parse_fun(&mut self) -> Result<Expr> {
+        // Consume "fun".
+        self.expect(TokenType::Keyword(Keyword::Fun))?;
+
+        let ident = self.parse_ident()?;
+
+        self.expect(TokenType::LeftParen)?;
+        let mut params = self.parse_params()?;
+        self.expect(TokenType::RightParen)?;
+
+        let body = self.block()?;
+        let fun_decl = FunDecl::new(params, body);
+
+        Ok(Expr::fun(ident, fun_decl))
+    }
+
     fn parse_print(&mut self) -> Result<Expr> {
         self.expect(TokenType::Keyword(Keyword::Print))?;
         let expr = self.parse_expression_statement()?;
         Ok(Expr::print(expr))
     }
 
+    pub fn parse_ident(&mut self) -> Result<Identifier> {
+        Ok(self.expect(TokenType::Identifier)?.source().to_string())
+    }
+
     fn parse_block(&mut self) -> Result<Expr> {
         Ok(Expr::block(self.block()?))
     }
 
-    pub fn parse_ident(&mut self) -> Result<Identifier> {
-        Ok(self.expect(TokenType::Identifier)?.source().to_string())
+    pub fn parse_params(&mut self) -> Result<Vec<Identifier>> {
+        let mut params = vec![];
+        while !self.check(&TokenType::RightParen)?
+            && !self.check(&TokenType::EOF)? {
+            params.push(self.parse_ident()?);
+
+            if !self.match_(&TokenType::Comma)? {
+                break;
+            }
+        }
+        Ok(params)
     }
 
     pub fn parse_expression_statement(&mut self) -> Result<Expr> {
@@ -71,7 +101,7 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn block(&mut self) -> Result<Vec<Expr>> {
+    fn block(&mut self) -> Result<BlockDecl> {
         // Consume '{'.
         self.expect(TokenType::LeftBrace)?;
 
@@ -89,7 +119,7 @@ impl<'a> Parser<'a> {
 
     pub fn expect(&mut self, expect: TokenType) -> Result<Token<'a>> {
         if self.check(&expect)? {
-            return Ok(self.consume()?)
+            return Ok(self.consume()?);
         }
 
         Err(ParserError::Expect(

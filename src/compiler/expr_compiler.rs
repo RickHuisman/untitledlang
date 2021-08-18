@@ -1,24 +1,25 @@
 use crate::compiler::compiler::Compiler;
 use crate::compiler::error::CompilerError;
-use crate::parser::ast::{Expr, BinaryOperator, LiteralExpr};
+use crate::parser::ast::{Expr, BinaryOperator, LiteralExpr, BlockDecl};
 use crate::vm::opcode::Opcode;
 use crate::compiler::value::Value;
 
 type Result<T> = std::result::Result<T, CompilerError>;
 
-pub fn compile_expr(compiler: &mut Compiler, expr: Expr) {
+pub fn compile_expr(c: &mut Compiler, expr: Expr) {
     match expr {
-        Expr::Grouping { .. } => {}
+        Expr::Grouping { expr } => compile_expr(c, *expr),
         Expr::Binary { left, op, right } => {
-            compile_binary(compiler, left, op, right)
+            compile_binary(c, left, op, right)
         }
         Expr::Unary { .. } => {}
         Expr::LetAssign { .. } => {}
         Expr::LetGet { .. } => {}
         Expr::LetSet { .. } => {}
-        Expr::Block { exprs } => {}
-        Expr::Print { expr } => compile_print(compiler, expr),
-        Expr::Literal(expr) => compile_literal(compiler, expr),
+        Expr::Fun { .. } => {}
+        Expr::Block { block } => compile_block(c, block),
+        Expr::Print { expr } => compile_print(c, expr),
+        Expr::Literal(expr) => compile_literal(c, expr),
     }
 }
 
@@ -52,6 +53,14 @@ fn compile_binary(
             compiler.emit(Opcode::Not);
         }
     }
+}
+
+fn compile_block(compiler: &mut Compiler, block: BlockDecl) {
+    compiler.begin_scope();
+    for expr in block {
+        compile_expr(compiler, expr);
+    }
+    compiler.end_scope();
 }
 
 fn compile_print(compiler: &mut Compiler, expr: Box<Expr>) {
