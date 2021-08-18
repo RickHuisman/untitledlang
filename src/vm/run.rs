@@ -17,6 +17,7 @@ impl VM {
                 Opcode::Less => self.less()?,
                 Opcode::Equal => self.equal()?,
                 Opcode::Not => self.not()?,
+                Opcode::Negate => self.negate()?,
                 Opcode::Return => self.ret()?,
                 Opcode::Print => self.print()?,
                 Opcode::Pop => { self.pop()?; }
@@ -84,6 +85,12 @@ impl VM {
     fn not(&mut self) -> Result<()> {
         let a = self.pop()?;
         self.push(bool::into(!bool::from(&a)));
+        Ok(())
+    }
+
+    fn negate(&mut self) -> Result<()> {
+        let a = self.pop()?;
+        self.push(-a);
         Ok(())
     }
 

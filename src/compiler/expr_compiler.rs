@@ -1,6 +1,6 @@
 use crate::compiler::compiler::Compiler;
 use crate::compiler::error::CompilerError;
-use crate::parser::ast::{Expr, BinaryOperator, LiteralExpr, BlockDecl};
+use crate::parser::ast::{Expr, BinaryOperator, LiteralExpr, BlockDecl, UnaryOperator};
 use crate::vm::opcode::Opcode;
 use crate::compiler::value::Value;
 
@@ -12,7 +12,7 @@ pub fn compile_expr(c: &mut Compiler, expr: Expr) {
         Expr::Binary { left, op, right } => {
             compile_binary(c, left, op, right)
         }
-        Expr::Unary { .. } => {}
+        Expr::Unary { op, expr } => compile_unary(c, op, expr),
         Expr::LetAssign { .. } => {}
         Expr::LetGet { .. } => {}
         Expr::LetSet { .. } => {}
@@ -53,6 +53,11 @@ fn compile_binary(
             compiler.emit(Opcode::Not);
         }
     }
+}
+
+fn compile_unary(compiler: &mut Compiler, op: UnaryOperator, expr: Box<Expr>) {
+    compile_expr(compiler, *expr);
+    compiler.emit(Opcode::from(op));
 }
 
 fn compile_block(compiler: &mut Compiler, block: BlockDecl) {

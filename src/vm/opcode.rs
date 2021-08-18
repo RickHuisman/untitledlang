@@ -1,3 +1,5 @@
+use crate::parser::ast::UnaryOperator;
+
 #[repr(u8)]
 pub enum Opcode {
     Return,
@@ -10,6 +12,7 @@ pub enum Opcode {
     Greater,
     Less,
     Not,
+    Negate,
     Print,
     Pop,
 }
@@ -27,9 +30,19 @@ impl From<u8> for Opcode {
             0x07 => Opcode::Greater,
             0x08 => Opcode::Less,
             0x09 => Opcode::Not,
-            0x0a => Opcode::Print,
-            0x0b => Opcode::Pop,
+            0x0a => Opcode::Negate,
+            0x0b => Opcode::Print,
+            0x0c => Opcode::Pop,
             _ => panic!("No opcode for byte: {}", byte), // TODO: Option?
+        }
+    }
+}
+
+impl From<UnaryOperator> for Opcode {
+    fn from(op: UnaryOperator) -> Self {
+        match op {
+            UnaryOperator::Negate => Opcode::Negate,
+            UnaryOperator::Not => Opcode::Not,
         }
     }
 }
