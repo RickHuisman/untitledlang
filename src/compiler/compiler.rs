@@ -1,74 +1,37 @@
-use crate::compiler::instance::CompilerInstance;
-use crate::parser::ast::{ModuleAst, Identifier};
-use crate::compiler::error::{Result, CompileError};
-use crate::compiler::object::{Function, FunctionType};
-use crate::vm::opcode::{Opcode, StackIndex};
-use crate::compiler::expr_compiler::compile_expr;
 use crate::compiler::chunk::Chunk;
+use crate::compiler::error::{CompileResult, CompilerError};
+use crate::compiler::instance::CompilerInstance;
+use crate::compiler::object::{Function, FunctionType};
 use crate::compiler::value::Value;
-use crate::compiler::local::Local;
-use crate::lexer::lexer::lex;
-use crate::parser::parser::parse;
-
-pub fn compile(source: &str) -> Result<Function> {
-    // TODO: Report errors.
-    let mut tokens = lex(source).unwrap();
-    let ast = parse(&mut tokens).unwrap();
-
-    let mut compiler = Compiler::new();
-
-    for expr in ast {
-        compile_expr(&mut compiler, expr);
-    }
-
-    Ok(compiler.end_compiler())
-}
+use crate::parser::ast::Identifier;
+use crate::vm::opcode::{Opcode, StackIndex};
 
 pub struct Compiler {
     current: CompilerInstance,
+    errors: Vec<CompilerError>,
 }
 
 impl Compiler {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Compiler {
             current: CompilerInstance::new(FunctionType::Script),
+            errors: vec![],
         }
     }
 
-    pub fn declare_variable(&mut self, ident: &Identifier) -> Result<()> {
-        // TODO: Use is_scoped.
+    pub fn declare_variable(&mut self, ident: &Identifier) {
         if self.is_scoped() {
             if self.contains_local_in_current_scope(&ident) {
-                panic!("TEST"); // TODO
+                self.add_error(CompilerError::LocalAlreadyDefined);
             }
 
             self.add_local(&ident);
-            // TODO: self.mark_initialized();
         }
-        // if *self.current.scope_depth() == 0 {
-        //     return Ok(());
-        // }
-
-
-        // for local in self.current.locals() {
-        //     if *local.depth() != -1 as isize &&
-        //         local.depth() < &self.current.scope_depth() {
-        //         break;
-        //     }
-        //
-        //     if *ident == *local.name() {
-        //         return Err(CompileError::LocalAlreadyDefined);
-        //     }
-        // }
-
-        // self.add_local(ident);
-        // self.mark_initialized();
-        Ok(())
     }
 
     pub fn define_variable(&mut self, ident: &Identifier) {
         if self.is_scoped() {
-            self.mark_initialized();
+            self.mark_local_initialized();
             return;
         }
 
@@ -79,29 +42,30 @@ impl Compiler {
         self.emit_byte(constant_id);
     }
 
+    pub fn resolve_local(&mut self, name: &str) -> Option<StackIndex> {
+        match self.current().resolve_local(name) {
+            Err(error) => {
+                self.add_error(error);
+                None
+            }
+            Ok(local) => local,
+        }
+    }
+
     pub fn add_local(&mut self, ident: &Identifier) {
         self.current.locals_mut().insert(ident);
     }
 
     pub fn contains_local_in_current_scope(&self, name: &str) -> bool {
-        self.current
-            .locals()
-            .get_at_current_depth(name)
-            .is_some()
+        self.current.locals().get_at_current_depth(name).is_some()
     }
 
-    fn mark_initialized(&mut self) {
-        // TODO: Use !is_scoped().
-        // TODO: Return early if not scoped
-        // if *self.current.scope_depth() == 0 {
-        //     return;
-        // }
+    fn mark_local_initialized(&mut self) {
+        if !self.is_scoped() {
+            return;
+        }
 
         self.current_mut().locals_mut().mark_initialized();
-
-        // TODO: Remove
-        // let index = &self.current.locals().len() - 1;
-        // *self.current.locals_mut()[index].depth_mut() = *self.current.scope_depth();
     }
 
     pub fn begin_scope(&mut self) {
@@ -109,30 +73,13 @@ impl Compiler {
     }
 
     pub fn end_scope(&mut self) {
-        for local in self.current_mut().locals_mut().end_scope().iter().rev() {
-            // TODO
-            // if local.captured() {
-            //     self.add_instruction(Instruction::CloseUpvalue);
-            // } else {
+        for _ in self.current_mut().locals_mut().end_scope().iter().rev() {
             self.emit(Opcode::Pop);
-            // }
         }
     }
 
-    // pub fn end_scope(&mut self) {
-    //     *self.current.scope_depth_mut() -= 1;
-    //
-    //     while self.current.locals().len() > 0
-    //         && self.current.locals()[self.current.locals().len() - 1].depth()
-    //         > self.current.scope_depth() {
-    //         self.emit(Opcode::Pop);
-    //         self.current.locals_mut().pop();
-    //     }
-    // }
-
-    pub fn is_scoped(&mut self) -> bool {
-        let c = self.current();
-        c.locals().scope_depth() > 0
+    pub fn is_scoped(&self) -> bool {
+        self.current().locals().scope_depth() > 0
     }
 
     pub fn end_compiler(&mut self) -> Function {
@@ -156,6 +103,14 @@ impl Compiler {
         let constant = self.current_chunk().add_constant(value);
         self.emit(Opcode::Constant);
         self.emit_byte(constant);
+    }
+
+    pub fn emit_string(&mut self, s: &str) {
+        self.emit_constant(Value::String(s.to_string()));
+    }
+
+    pub fn add_error(&mut self, error: CompilerError) {
+        self.errors.push(error);
     }
 
     pub fn emit(&mut self, opcode: Opcode) {

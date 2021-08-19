@@ -1,10 +1,9 @@
+use crate::vm::interpret;
 use std::io;
-use std::borrow::BorrowMut;
-use crate::vm::vm::interpret;
 
+mod compiler;
 mod lexer;
 mod parser;
-mod compiler;
 mod vm;
 
 pub fn run_repl() {
@@ -17,7 +16,7 @@ fn read_line() -> String {
     let mut input = String::new();
     match io::stdin().read_line(&mut input) {
         Ok(_) => {
-            trim_newline(input.borrow_mut());
+            trim_newline(&mut input);
             input
         }
         Err(error) => {
@@ -37,16 +36,19 @@ fn trim_newline(s: &mut String) {
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::lexer::lex;
-    use crate::parser::parser::parse;
     use crate::compiler::compiler::compile;
     use crate::vm::vm::VM;
-    use std::io::Cursor;
-    use crate::compiler::object::Closure;
-    use crate::vm::obj::Gc;
-    use crate::compiler::value::Value;
     use regex::Regex;
     use std::fs;
+    use std::io::Cursor;
+    use walkdir::WalkDir;
+
+    #[derive(PartialEq, Debug)]
+    enum TestResult {
+        Ok,
+        CompileError,
+        RuntimeError,
+    }
 
     fn parse_expects(source: &str, regex: Regex, field: usize) -> Vec<String> {
         let mut results = vec![];
@@ -60,11 +62,27 @@ mod tests {
         results
     }
 
-    #[derive(PartialEq, Debug)]
-    enum TestResult {
-        Ok,
-        CompileError,
-        RuntimeError,
+    fn extract_expects(source: &str) -> TestResult {
+        let expected_result =
+            if !parse_expects(source, Regex::new(r"\[line (\d+)\] (Error.+)").unwrap(), 2)
+                .is_empty()
+            {
+                TestResult::CompileError
+            } else if !parse_expects(source, Regex::new(r"// (Error.*)").unwrap(), 1).is_empty() {
+                TestResult::CompileError
+            } else if !parse_expects(
+                source,
+                Regex::new(r"// expect runtime error: (.+)").unwrap(),
+                1,
+            )
+            .is_empty()
+            {
+                TestResult::RuntimeError
+            } else {
+                TestResult::Ok
+            };
+
+        expected_result
     }
 
     fn execute(source: &str) -> (Vec<String>, TestResult) {
@@ -88,42 +106,28 @@ mod tests {
     }
 
     fn harness(source: &str) {
-        let expects = parse_expects(
-            source,
-            Regex::new(r"// expect: ?(.*)").unwrap(),
-            1,
-        );
+        let expects = parse_expects(source, Regex::new(r"// expect: ?(.*)").unwrap(), 1);
 
-        let expected_result =
-            if !parse_expects(source, Regex::new(r"\[line (\d+)\] (Error.+)").unwrap(), 2).is_empty() {
-                TestResult::CompileError
-            } else if !parse_expects(source, Regex::new(r"// (Error.*)").unwrap(), 1).is_empty() {
-                TestResult::CompileError
-            } else if !parse_expects(
-                source,
-                Regex::new(r"// expect runtime error: (.+)").unwrap(),
-                1,
-            ).is_empty()
-            {
-                TestResult::RuntimeError
-            } else {
-                TestResult::Ok
-            };
+        let expected_result = extract_expects(source);
 
         let (output, result) = execute(source);
         assert_eq!(expects, output);
         assert_eq!(expected_result, result);
     }
 
+    fn run_test_file(path: String) {
+        let source = fs::read_to_string(path).unwrap();
+        harness(&source);
+    }
+
     #[test]
     fn run_tests() {
         // Runs every test in the test folder.
-        let paths = fs::read_dir("./test").unwrap();
-
-        for path in paths {
-            let path = path.unwrap().path();
-            let source = fs::read_to_string(path.to_str().unwrap()).unwrap();
-            harness(&source);
+        for f in WalkDir::new("./test").into_iter().filter_map(|e| e.ok()) {
+            if f.metadata().unwrap().is_file() {
+                let path = f.path().display().to_string();
+                run_test_file(path);
+            }
         }
     }
 }

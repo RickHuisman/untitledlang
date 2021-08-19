@@ -1,8 +1,14 @@
 use crate::lexer::token::TokenType;
 
+pub type ParseResult<T> = std::result::Result<T, ParserError>;
+
+// TODO: Use Token not TokenType.
 #[derive(Debug)]
 pub enum ParserError {
-    UnexpectedEOF,
+    Expected(TokenType, TokenType, usize),
+    Unexpected(TokenType),
     ExpectedPrimary(TokenType),
-    Expect(TokenType, TokenType, usize),
+    ExpectedUnaryOperator(TokenType),
+    ExpectedBinaryOperator(TokenType),
+    UnexpectedEOF,
 }

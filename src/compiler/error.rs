@@ -1,9 +1,7 @@
-pub type Result<T> = std::result::Result<T, CompileError>;
+pub type CompileResult<T> = std::result::Result<T, CompilerError>;
 
 #[derive(Debug)]
-pub enum CompileError {
+pub enum CompilerError {
     LocalAlreadyDefined,
     LocalNotInitialized,
 }
-
-// panic!("Already a variable called {} in this scope.", ident); TODO

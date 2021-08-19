@@ -1,5 +1,5 @@
-use crate::vm::obj::Gc;
 use crate::compiler::object::Closure;
+use crate::vm::obj::Gc;
 
 #[derive(Clone)]
 pub struct CallFrame {

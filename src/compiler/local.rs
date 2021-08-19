@@ -1,5 +1,3 @@
-use crate::parser::ast::Identifier;
-
 #[derive(Debug, Clone)]
 pub struct Local {
     name: String,
@@ -9,7 +7,8 @@ pub struct Local {
 }
 
 impl Local {
-    pub fn slot(&self) -> usize { // TODO: StackIndex?
+    pub fn slot(&self) -> usize {
+        // TODO: StackIndex?
         self.slot
     }
 
@@ -63,25 +62,24 @@ impl Locals {
         self.stack[index].initialized = true;
     }
 
-    pub fn get(&self, identifier: &str) -> Option<&Local> {
-        self.stack.iter().rev().find(|l| l.name == identifier)
+    pub fn get(&self, ident: &str) -> Option<&Local> {
+        self.stack.iter().find(|l| l.name == ident)
     }
 
-    pub fn get_at_current_depth(&self, identifier: &str) -> Option<&Local> {
-        self.get_at_depth(identifier, self.scope_depth)
+    pub fn get_at_current_depth(&self, ident: &str) -> Option<&Local> {
+        self.get_at_depth(ident, self.scope_depth)
     }
 
-    pub fn get_at_depth(&self, identifier: &str, depth: usize) -> Option<&Local> {
+    pub fn get_at_depth(&self, ident: &str, depth: usize) -> Option<&Local> {
         self.stack
             .iter()
-            .rev()
-            .find(|l| l.depth == depth && l.name == identifier)
+            .find(|l| l.name == ident && l.depth == depth)
     }
 
-    pub fn insert(&mut self, ident: &Identifier) -> Option<&Local> {
-        //TODO Maybe Result<&Local, ()> instead
+    pub fn insert(&mut self, ident: &str) -> Option<&Local> {
+        // TODO: Maybe Result<&Local, ()> instead
         if let Some(_) = self.get_at_depth(&ident, self.scope_depth) {
-            None
+            return None;
         } else {
             self.stack.push(Local {
                 name: ident.to_string(),

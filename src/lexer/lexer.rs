@@ -1,26 +1,7 @@
+use crate::lexer::error::{LexResult, SyntaxError};
+use crate::lexer::token::*;
 use std::iter::Peekable;
 use std::str::{CharIndices, FromStr};
-use crate::lexer::token::*;
-use crate::lexer::error::SyntaxError;
-
-type Result<T> = std::result::Result<T, SyntaxError>;
-
-pub fn lex(source: &str) -> Result<Vec<Token>> {
-    let mut lexer = Lexer::new(source);
-
-    let mut tokens = vec![];
-    loop {
-        if let Some(token) = lexer.read_token()? {
-            if let TokenType::EOF = token.token_type() {
-                tokens.push(token);
-                break;
-            }
-            tokens.push(token);
-        }
-    }
-
-    Ok(tokens)
-}
 
 pub struct Lexer<'a> {
     source: &'a str,
@@ -29,7 +10,7 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    fn new(source: &'a str) -> Self {
+    pub fn new(source: &'a str) -> Self {
         Lexer {
             source,
             chars: source.char_indices().peekable(),
@@ -37,15 +18,13 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_token(&mut self) -> Result<Option<Token<'a>>> {
+    pub(crate) fn read_token(&mut self) -> LexResult<Option<Token<'a>>> {
         self.skip_whitespace();
         if self.is_at_end() {
             return self.eof();
         }
 
-        let (start, c) = self
-            .advance()
-            .ok_or(SyntaxError::UnexpectedEOF)?;
+        let (start, c) = self.advance().ok_or(SyntaxError::UnexpectedEOF)?;
 
         if c.is_alphabetic() {
             return self.identifier(start);
@@ -75,7 +54,7 @@ impl<'a> Lexer<'a> {
                 } else {
                     TokenType::Slash
                 }
-            },
+            }
             '!' => {
                 if self.check('=')? {
                     self.advance();
@@ -108,14 +87,14 @@ impl<'a> Lexer<'a> {
                     TokenType::Equal
                 }
             }
-            '"' => self.string()?,
+            '"' => return self.string(start),
             _ => todo!(), // TODO: ???
         };
 
         Ok(Some(self.make_token(token_type, start)))
     }
 
-    fn identifier(&mut self, start: usize) -> Result<Option<Token<'a>>> {
+    fn identifier(&mut self, start: usize) -> LexResult<Option<Token<'a>>> {
         self.advance_while(|&c| c.is_alphanumeric());
 
         let source = self.token_contents(start);
@@ -127,7 +106,7 @@ impl<'a> Lexer<'a> {
         Ok(Some(self.make_token(token_type, start)))
     }
 
-    fn number(&mut self, start: usize) -> Result<Option<Token<'a>>> {
+    fn number(&mut self, start: usize) -> LexResult<Option<Token<'a>>> {
         self.advance_while(|c| c.is_digit(10));
 
         // Look for a fractional part
@@ -147,7 +126,8 @@ impl<'a> Lexer<'a> {
         Ok(Some(self.make_token(TokenType::Number, start)))
     }
 
-    fn string(&mut self) -> Result<TokenType> {
+    fn string(&mut self, start: usize) -> LexResult<Option<Token<'a>>> {
+        let start = start + 1;
         self.advance_while(|&c| c != '"');
         if self.is_at_end() {
             return Err(SyntaxError::UnterminatedString);
@@ -156,10 +136,18 @@ impl<'a> Lexer<'a> {
         // Consume the '"'.
         self.advance();
 
-        Ok(TokenType::String)
+        let source = self.token_contents(start);
+        let s = &source[0..source.len() - 1];
+        let token = Token::new(
+            TokenType::String,
+            s,
+            Position::new(start, start + s.len(), self.line),
+        );
+
+        Ok(Some(token))
     }
 
-    fn eof(&mut self) -> Result<Option<Token<'a>>> {
+    fn eof(&mut self) -> LexResult<Option<Token<'a>>> {
         Ok(Some(self.make_token(TokenType::EOF, self.source.len())))
     }
 
@@ -186,8 +174,8 @@ impl<'a> Lexer<'a> {
     }
 
     fn advance_while<F>(&mut self, f: F) -> usize
-        where
-                for<'r> F: Fn(&'r char) -> bool,
+    where
+        for<'r> F: Fn(&'r char) -> bool,
     {
         let mut count = 0;
         while let Some(char) = self.peek() {
@@ -210,7 +198,7 @@ impl<'a> Lexer<'a> {
         })
     }
 
-    fn check(&mut self, c: char) -> Result<bool> {
+    fn check(&mut self, c: char) -> LexResult<bool> {
         self.peek()
             .map(|p| p == c)
             .ok_or(SyntaxError::UnexpectedEOF)
@@ -232,6 +220,7 @@ impl<'a> Lexer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::lexer::lex;
 
     #[test]
     fn lex_numbers() {
@@ -251,9 +240,9 @@ mod tests {
     #[test]
     fn lex_strings() {
         let expect = vec![
-            Token::new(TokenType::String, "\"Hello\"", Position::new(0, 7, 1)),
-            Token::new(TokenType::String, "\",\"", Position::new(8, 11, 1)),
-            Token::new(TokenType::String, "\"World!\"", Position::new(12, 20, 1)),
+            Token::new(TokenType::String, "Hello", Position::new(1, 6, 1)),
+            Token::new(TokenType::String, ",", Position::new(9, 10, 1)),
+            Token::new(TokenType::String, "World!", Position::new(13, 19, 1)),
             Token::new(TokenType::EOF, "", Position::new(20, 20, 1)),
         ];
 

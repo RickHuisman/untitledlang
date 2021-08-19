@@ -1,37 +1,74 @@
 use crate::lexer::token::TokenType;
+use crate::parser::error::{ParseResult, ParserError};
 
 pub type ModuleAst = Vec<Expr>;
 pub type BlockDecl = Vec<Expr>;
 
 #[derive(PartialEq, Debug)]
 pub enum Expr {
-    Grouping { expr: Box<Expr> },
-    Binary { left: Box<Expr>, op: BinaryOperator, right: Box<Expr> },
-    Unary { op: UnaryOperator, expr: Box<Expr> },
-    LetAssign { ident: Identifier, initializer: Box<Expr> }, // TODO: Make initializer Option.
-    LetGet { ident: Identifier },
-    LetSet { ident: Identifier, expr: Box<Expr> },
-    Fun { ident: Identifier, decl: FunDecl },
-    Block { block: BlockDecl },
-    Print { expr: Box<Expr> },
+    Grouping {
+        expr: Box<Expr>,
+    },
+    Binary {
+        left: Box<Expr>,
+        op: BinaryOperator,
+        right: Box<Expr>,
+    },
+    Unary {
+        op: UnaryOperator,
+        expr: Box<Expr>,
+    },
+    LetAssign {
+        ident: Identifier,
+        initializer: Box<Expr>,
+    },
+    LetGet {
+        ident: Identifier,
+    },
+    LetSet {
+        ident: Identifier,
+        expr: Box<Expr>,
+    },
+    Fun {
+        ident: Identifier,
+        decl: FunDecl,
+    },
+    Block {
+        block: BlockDecl,
+    },
+    Print {
+        expr: Box<Expr>,
+    },
     Literal(LiteralExpr),
 }
 
 impl Expr {
     pub fn grouping(expr: Expr) -> Expr {
-        Expr::Grouping { expr: Box::new(expr) }
+        Expr::Grouping {
+            expr: Box::new(expr),
+        }
     }
 
     pub fn binary(left: Expr, op: BinaryOperator, right: Expr) -> Expr {
-        Expr::Binary { left: Box::new(left), op, right: Box::new(right) }
+        Expr::Binary {
+            left: Box::new(left),
+            op,
+            right: Box::new(right),
+        }
     }
 
     pub fn unary(op: UnaryOperator, expr: Expr) -> Expr {
-        Expr::Unary { op, expr: Box::new(expr) }
+        Expr::Unary {
+            op,
+            expr: Box::new(expr),
+        }
     }
 
     pub fn let_assign(ident: Identifier, initializer: Expr) -> Expr {
-        Expr::LetAssign { ident, initializer: Box::new(initializer) }
+        Expr::LetAssign {
+            ident,
+            initializer: Box::new(initializer),
+        }
     }
 
     pub fn let_get(ident: Identifier) -> Expr {
@@ -39,7 +76,10 @@ impl Expr {
     }
 
     pub fn let_set(ident: Identifier, expr: Expr) -> Expr {
-        Expr::LetSet { ident, expr: Box::new(expr) }
+        Expr::LetSet {
+            ident,
+            expr: Box::new(expr),
+        }
     }
 
     pub fn fun(ident: Identifier, decl: FunDecl) -> Expr {
@@ -51,7 +91,9 @@ impl Expr {
     }
 
     pub fn print(expr: Expr) -> Expr {
-        Expr::Print { expr: Box::new(expr) }
+        Expr::Print {
+            expr: Box::new(expr),
+        }
     }
 }
 
@@ -60,6 +102,7 @@ pub type Identifier = String;
 #[derive(PartialEq, Debug)]
 pub enum LiteralExpr {
     Number(f64),
+    String(String),
     Nil,
 }
 
@@ -78,8 +121,8 @@ pub enum BinaryOperator {
 }
 
 impl BinaryOperator {
-    pub fn from_token(token_type: &TokenType) -> Option<BinaryOperator> {
-        let op = match token_type {
+    pub fn from_token(token_type: &TokenType) -> ParseResult<BinaryOperator> {
+        Ok(match token_type {
             TokenType::Minus => BinaryOperator::Subtract,
             TokenType::Plus => BinaryOperator::Add,
             TokenType::Star => BinaryOperator::Multiply,
@@ -91,10 +134,8 @@ impl BinaryOperator {
             TokenType::LessThanEqual => BinaryOperator::LessThanEqual,
             TokenType::GreaterThan => BinaryOperator::GreaterThan,
             TokenType::GreaterThanEqual => BinaryOperator::GreaterThanEqual,
-            _ => return None,
-        };
-
-        Some(op)
+            _ => return Err(ParserError::ExpectedBinaryOperator(token_type.clone())),
+        })
     }
 }
 
@@ -105,11 +146,11 @@ pub enum UnaryOperator {
 }
 
 impl UnaryOperator {
-    pub fn from_token(token_type: &TokenType) -> Option<UnaryOperator> {
-        Some(match token_type {
+    pub fn from_token(token_type: &TokenType) -> ParseResult<UnaryOperator> {
+        Ok(match token_type {
             TokenType::Minus => UnaryOperator::Negate,
             TokenType::Bang => UnaryOperator::Not,
-            _ => return None,
+            _ => return Err(ParserError::ExpectedUnaryOperator(token_type.clone())),
         })
     }
 }

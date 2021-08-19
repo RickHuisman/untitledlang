@@ -1,13 +1,7 @@
-use crate::lexer::token::TokenType;
+pub type LexResult<T> = std::result::Result<T, SyntaxError>;
 
 #[derive(Debug, Clone)]
 pub enum SyntaxError {
     UnterminatedString,
     UnexpectedEOF,
-}
-
-#[derive(Debug)]
-pub enum ParserError {
-    UnexpectedEOF,
-    Expect(TokenType, TokenType, usize),
 }

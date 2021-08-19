@@ -63,7 +63,7 @@ pub enum TokenType {
     // Keywords
     Keyword(Keyword),
     Identifier,
-   
+
     EOF,
 }
 

@@ -1,9 +1,9 @@
+use crate::compiler::object::{Closure, Function};
+use crate::vm::obj::Gc;
 use std::cmp::Ordering;
-use std::ops::{Div, Neg, Mul, Sub, Add};
 use std::fmt;
 use std::fmt::Formatter;
-use crate::vm::obj::Gc;
-use crate::compiler::object::{Closure, Function};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -20,10 +20,10 @@ impl fmt::Display for Value {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Value::Number(n) => write!(f, "{}", n),
+            Value::String(s) => write!(f, "{}", s),
             Value::True => write!(f, "true"),
             Value::False => write!(f, "false"),
             Value::Nil => write!(f, "nil"),
-            Value::String(s) => write!(f, "String({})", s),
             Value::Closure(clos) => write!(f, "Closure({:?})", clos),
             Value::Function(fun) => write!(f, "Function({})", **fun),
         }

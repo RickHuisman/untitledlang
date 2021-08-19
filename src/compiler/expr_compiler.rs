@@ -1,21 +1,14 @@
 use crate::compiler::compiler::Compiler;
-use crate::compiler::error::CompileError;
-use crate::parser::ast::{Expr, BinaryOperator, LiteralExpr, BlockDecl, UnaryOperator, Identifier};
-use crate::vm::opcode::Opcode;
 use crate::compiler::value::Value;
-
-type Result<T> = std::result::Result<T, CompileError>;
+use crate::parser::ast::{BinaryOperator, BlockDecl, Expr, Identifier, LiteralExpr, UnaryOperator};
+use crate::vm::opcode::Opcode;
 
 pub fn compile_expr(c: &mut Compiler, expr: Expr) {
     match expr {
         Expr::Grouping { expr } => compile_expr(c, *expr),
-        Expr::Binary { left, op, right } => {
-            compile_binary(c, left, op, right)
-        }
+        Expr::Binary { left, op, right } => compile_binary(c, left, op, right),
         Expr::Unary { op, expr } => compile_unary(c, op, expr),
-        Expr::LetAssign { ident, initializer } => {
-            compile_let_assign(c, ident, initializer)
-        }
+        Expr::LetAssign { ident, initializer } => compile_let_assign(c, ident, initializer),
         Expr::LetGet { ident } => compile_let_get(c, ident),
         Expr::LetSet { ident, expr } => compile_let_set(c, ident, expr),
         Expr::Fun { .. } => todo!(),
@@ -25,12 +18,7 @@ pub fn compile_expr(c: &mut Compiler, expr: Expr) {
     }
 }
 
-fn compile_binary(
-    compiler: &mut Compiler,
-    left: Box<Expr>,
-    op: BinaryOperator,
-    right: Box<Expr>,
-) {
+fn compile_binary(compiler: &mut Compiler, left: Box<Expr>, op: BinaryOperator, right: Box<Expr>) {
     compile_expr(compiler, *left);
     compile_expr(compiler, *right);
 
@@ -65,62 +53,37 @@ fn compile_unary(compiler: &mut Compiler, op: UnaryOperator, expr: Box<Expr>) {
 fn compile_let_assign(compiler: &mut Compiler, ident: Identifier, init: Box<Expr>) {
     compiler.declare_variable(&ident);
 
-    // TODO: Check if initialized -> if not init with nil.
-    // if let Some(expr) = expr {
-    //     compile_expr(compiler, expr.as_ref());
-    // } else {
-    //     // compile_nil(compiler);
-    // }
-
     // Compile initializer.
     compile_expr(compiler, *init);
 
     compiler.define_variable(&ident);
-
-    // compile_expr(compiler, *init);
-    //
-    // if *compiler.current().scope_depth() > 0 {
-    //     // Local variable
-    //     compiler.declare_variable(ident);
-    // } else {
-    //     // Global variable
-    //     compiler.define_variable(ident);
-    // }
 }
 
 fn compile_let_get(compiler: &mut Compiler, ident: Identifier) {
-    if let Ok(arg) = compiler.current().resolve_local(&ident) {
-        if let Some(arg) = arg {
-            // Local variable
-            compiler.emit(Opcode::GetLocal);
-            compiler.emit_byte(arg as u8);
-        } else {
-            // Global variable
-            compiler.emit(Opcode::GetGlobal);
-            let constant_id = compiler
-                .current_chunk()
-                .add_constant(Value::String(ident));
-            compiler.emit_byte(constant_id);
-        }
+    if let Some(local) = compiler.resolve_local(&ident) {
+        // Local variable
+        compiler.emit(Opcode::GetLocal);
+        compiler.emit_byte(local as u8);
+    } else {
+        // Global variable
+        compiler.emit(Opcode::GetGlobal);
+        let constant_id = compiler.current_chunk().add_constant(Value::String(ident));
+        compiler.emit_byte(constant_id);
     }
 }
 
 fn compile_let_set(compiler: &mut Compiler, ident: Identifier, expr: Box<Expr>) {
     compile_expr(compiler, *expr);
 
-    if let Ok(arg) = compiler.current().resolve_local(&ident) {
-        if let Some(arg) = arg {
-            // Local variable
-            compiler.emit(Opcode::SetLocal);
-            compiler.emit_byte(arg as u8);
-        } else {
-            // Global variable
-            compiler.emit(Opcode::SetGlobal);
-            let constant_id = compiler
-                .current_chunk()
-                .add_constant(Value::String(ident));
-            compiler.emit_byte(constant_id);
-        }
+    if let Some(local) = compiler.resolve_local(&ident) {
+        // Local variable
+        compiler.emit(Opcode::SetLocal);
+        compiler.emit_byte(local as u8);
+    } else {
+        // Global variable
+        compiler.emit(Opcode::SetGlobal);
+        let constant_id = compiler.current_chunk().add_constant(Value::String(ident));
+        compiler.emit_byte(constant_id);
     }
 }
 
@@ -140,6 +103,7 @@ fn compile_print(compiler: &mut Compiler, expr: Box<Expr>) {
 fn compile_literal(compiler: &mut Compiler, literal: LiteralExpr) {
     match literal {
         LiteralExpr::Number(n) => compiler.emit_constant(Value::Number(n)),
+        LiteralExpr::String(s) => compiler.emit_string(&s),
         LiteralExpr::Nil => todo!(), // TODO: Compile nil literals.
     }
 }

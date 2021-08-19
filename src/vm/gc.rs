@@ -1,6 +1,6 @@
-use std::any::Any;
 use crate::vm::obj::Gc;
 use crate::vm::vm::VM;
+use std::any::Any;
 use std::io::Write;
 
 impl<W: Write> VM<W> {

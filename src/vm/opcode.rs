@@ -1,6 +1,5 @@
 use crate::parser::ast::UnaryOperator;
 
-pub type ConstantIndex = usize;
 pub type StackIndex = usize;
 
 #[repr(u8)]
@@ -46,7 +45,7 @@ impl From<u8> for Opcode {
             0x0f => Opcode::SetGlobal,
             0x10 => Opcode::Print,
             0x11 => Opcode::Pop,
-            _ => panic!("No opcode for byte: {}", byte), // TODO: Option?
+            _ => panic!("No opcode for byte: {}", byte),
         }
     }
 }
