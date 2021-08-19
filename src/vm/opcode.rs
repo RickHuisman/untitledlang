@@ -1,5 +1,8 @@
 use crate::parser::ast::UnaryOperator;
 
+pub type ConstantIndex = usize;
+pub type StackIndex = usize;
+
 #[repr(u8)]
 pub enum Opcode {
     Return,
@@ -13,6 +16,11 @@ pub enum Opcode {
     Less,
     Not,
     Negate,
+    GetLocal,
+    SetLocal,
+    DefineGlobal,
+    GetGlobal,
+    SetGlobal,
     Print,
     Pop,
 }
@@ -31,8 +39,13 @@ impl From<u8> for Opcode {
             0x08 => Opcode::Less,
             0x09 => Opcode::Not,
             0x0a => Opcode::Negate,
-            0x0b => Opcode::Print,
-            0x0c => Opcode::Pop,
+            0x0b => Opcode::GetLocal,
+            0x0c => Opcode::SetLocal,
+            0x0d => Opcode::DefineGlobal,
+            0x0e => Opcode::GetGlobal,
+            0x0f => Opcode::SetGlobal,
+            0x10 => Opcode::Print,
+            0x11 => Opcode::Pop,
             _ => panic!("No opcode for byte: {}", byte), // TODO: Option?
         }
     }

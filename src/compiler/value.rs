@@ -11,6 +11,7 @@ pub enum Value {
     True,
     False,
     Nil,
+    String(String),
     Closure(Gc<Closure>),
     Function(Gc<Function>),
 }
@@ -18,10 +19,11 @@ pub enum Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Value::Number(n) => write!(f, "Number({})", n),
-            Value::True => write!(f, "True"),
-            Value::False => write!(f, "False"),
-            Value::Nil => write!(f, "Nil"),
+            Value::Number(n) => write!(f, "{}", n),
+            Value::True => write!(f, "true"),
+            Value::False => write!(f, "false"),
+            Value::Nil => write!(f, "nil"),
+            Value::String(s) => write!(f, "String({})", s),
             Value::Closure(clos) => write!(f, "Closure({:?})", clos),
             Value::Function(fun) => write!(f, "Function({})", **fun),
         }
@@ -47,6 +49,7 @@ impl Into<Value> for bool {
     }
 }
 
+// TODO: Return errors, not panic.
 impl Add for Value {
     type Output = Self;
 

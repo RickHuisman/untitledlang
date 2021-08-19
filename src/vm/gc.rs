@@ -1,8 +1,9 @@
 use std::any::Any;
 use crate::vm::obj::Gc;
 use crate::vm::vm::VM;
+use std::io::Write;
 
-impl VM {
+impl<W: Write> VM<W> {
     pub fn alloc<T: Any>(&mut self, obj: T) -> Gc<T> {
         // if self.should_collect() {
         //     self.collect_garbage();

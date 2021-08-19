@@ -10,12 +10,13 @@ pub fn lex(source: &str) -> Result<Vec<Token>> {
 
     let mut tokens = vec![];
     loop {
-        let token = lexer.read_token()?;
-        if let TokenType::EOF = token.token_type() {
+        if let Some(token) = lexer.read_token()? {
+            if let TokenType::EOF = token.token_type() {
+                tokens.push(token);
+                break;
+            }
             tokens.push(token);
-            break;
         }
-        tokens.push(token);
     }
 
     Ok(tokens)
@@ -36,7 +37,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_token(&mut self) -> Result<Token<'a>> {
+    fn read_token(&mut self) -> Result<Option<Token<'a>>> {
         self.skip_whitespace();
         if self.is_at_end() {
             return self.eof();
@@ -66,7 +67,15 @@ impl<'a> Lexer<'a> {
             '+' => TokenType::Plus,
             '-' => TokenType::Minus,
             '*' => TokenType::Star,
-            '/' => TokenType::Slash,
+            '/' => {
+                // Ignore comments.
+                if self.check('/')? {
+                    self.advance_while(|&ch| ch != '\n');
+                    return Ok(None);
+                } else {
+                    TokenType::Slash
+                }
+            },
             '!' => {
                 if self.check('=')? {
                     self.advance();
@@ -103,10 +112,10 @@ impl<'a> Lexer<'a> {
             _ => todo!(), // TODO: ???
         };
 
-        Ok(self.make_token(token_type, start))
+        Ok(Some(self.make_token(token_type, start)))
     }
 
-    fn identifier(&mut self, start: usize) -> Result<Token<'a>> {
+    fn identifier(&mut self, start: usize) -> Result<Option<Token<'a>>> {
         self.advance_while(|&c| c.is_alphanumeric());
 
         let source = self.token_contents(start);
@@ -115,10 +124,10 @@ impl<'a> Lexer<'a> {
             .map(TokenType::Keyword)
             .unwrap_or(TokenType::Identifier);
 
-        Ok(self.make_token(token_type, start))
+        Ok(Some(self.make_token(token_type, start)))
     }
 
-    fn number(&mut self, start: usize) -> Result<Token<'a>> {
+    fn number(&mut self, start: usize) -> Result<Option<Token<'a>>> {
         self.advance_while(|c| c.is_digit(10));
 
         // Look for a fractional part
@@ -135,7 +144,7 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        Ok(self.make_token(TokenType::Number, start))
+        Ok(Some(self.make_token(TokenType::Number, start)))
     }
 
     fn string(&mut self) -> Result<TokenType> {
@@ -150,8 +159,8 @@ impl<'a> Lexer<'a> {
         Ok(TokenType::String)
     }
 
-    fn eof(&mut self) -> Result<Token<'a>> {
-        Ok(self.make_token(TokenType::EOF, self.source.len()))
+    fn eof(&mut self) -> Result<Option<Token<'a>>> {
+        Ok(Some(self.make_token(TokenType::EOF, self.source.len())))
     }
 
     fn make_token(&mut self, token_type: TokenType, start: usize) -> Token<'a> {
@@ -278,7 +287,20 @@ mod tests {
             Token::new(TokenType::EOF, "", Position::new(21, 21, 1)),
         ];
 
-        let source = r#"let x = 3; let y = 5;"#;
+        let source = "let x = 3; let y = 5;";
+
+        let actual = lex(source).unwrap();
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
+    fn lex_comments() {
+        let expect = vec![
+            Token::new(TokenType::Number, "2", Position::new(0, 1, 1)),
+            Token::new(TokenType::EOF, "", Position::new(34, 34, 1)),
+        ];
+
+        let source = r#"2 // This comment will be ignored."#;
 
         let actual = lex(source).unwrap();
         assert_eq!(expect, actual);

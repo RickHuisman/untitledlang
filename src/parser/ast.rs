@@ -8,7 +8,7 @@ pub enum Expr {
     Grouping { expr: Box<Expr> },
     Binary { left: Box<Expr>, op: BinaryOperator, right: Box<Expr> },
     Unary { op: UnaryOperator, expr: Box<Expr> },
-    LetAssign { ident: Identifier, initializer: Box<Expr> },
+    LetAssign { ident: Identifier, initializer: Box<Expr> }, // TODO: Make initializer Option.
     LetGet { ident: Identifier },
     LetSet { ident: Identifier, expr: Box<Expr> },
     Fun { ident: Identifier, decl: FunDecl },
