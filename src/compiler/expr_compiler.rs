@@ -104,6 +104,8 @@ fn compile_literal(compiler: &mut Compiler, literal: LiteralExpr) {
     match literal {
         LiteralExpr::Number(n) => compiler.emit_constant(Value::Number(n)),
         LiteralExpr::String(s) => compiler.emit_string(&s),
+        LiteralExpr::True => compiler.emit_constant(Value::Bool(true)),
+        LiteralExpr::False => compiler.emit_constant(Value::Bool(false)),
         LiteralExpr::Nil => todo!(), // TODO: Compile nil literals.
     }
 }

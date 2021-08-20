@@ -1,5 +1,5 @@
 use crate::compiler::chunk::Chunk;
-use crate::compiler::error::{CompileResult, CompilerError};
+use crate::compiler::error::CompilerError;
 use crate::compiler::instance::CompilerInstance;
 use crate::compiler::object::{Function, FunctionType};
 use crate::compiler::value::Value;

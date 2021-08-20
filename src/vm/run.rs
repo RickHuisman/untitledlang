@@ -20,9 +20,9 @@ impl<W: Write> VM<W> {
                 Opcode::Negate => self.negate()?,
                 Opcode::GetLocal => self.get_local()?,
                 Opcode::SetLocal => self.set_local()?,
+                Opcode::DefineGlobal => self.define_global()?,
                 Opcode::GetGlobal => self.get_global()?,
                 Opcode::SetGlobal => self.set_global()?,
-                Opcode::DefineGlobal => self.define_global()?,
                 Opcode::Return => self.ret()?,
                 Opcode::Print => self.print()?,
                 Opcode::Pop => {
@@ -108,10 +108,10 @@ impl<W: Write> VM<W> {
 
         if let Some(value) = self.stack().get(index).cloned() {
             self.stack_mut().push(value);
-            Ok(())
-        } else {
-            Err(RuntimeError::BadStackIndex(index, self.stack().len()))
+            return Ok(());
         }
+
+        Err(RuntimeError::BadStackIndex(index, self.stack().len()))
     }
 
     fn set_local(&mut self) -> RunResult<()> {
@@ -126,10 +126,10 @@ impl<W: Write> VM<W> {
         if let Ok(value) = self.pop() {
             let var_name = self.read_string()?;
             self.globals_mut().insert(var_name, value);
-            Ok(())
-        } else {
-            Err(RuntimeError::BadStackIndex(10, self.stack().len())) // TODO 10
+            return Ok(());
         }
+
+        Err(RuntimeError::BadStackIndex(10, self.stack().len())) // TODO 10
     }
 
     fn get_global(&mut self) -> RunResult<()> {

@@ -1,4 +1,4 @@
-use crate::lexer::token::TokenType;
+use crate::lexer::token::{Keyword, TokenType};
 use crate::parser::ast::*;
 use crate::parser::error::{ParseResult, ParserError};
 use crate::parser::parser::Parser;
@@ -62,7 +62,11 @@ fn parse_expr(parser: &mut Parser, precedence: Precedence) -> ParseResult<Expr> 
 
 fn parse_prefix(parser: &mut Parser) -> ParseResult<Expr> {
     match parser.peek_type()? {
-        TokenType::Number | TokenType::Identifier | TokenType::String => parse_primary(parser),
+        TokenType::Number
+        | TokenType::Identifier
+        | TokenType::String
+        | TokenType::Keyword(Keyword::True)
+        | TokenType::Keyword(Keyword::False) => parse_primary(parser),
         TokenType::Bang | TokenType::Minus => parse_unary(parser),
         TokenType::LeftParen => parse_grouping(parser),
         _ => Err(ParserError::Unexpected(parser.peek_type()?.clone())),
@@ -94,6 +98,8 @@ fn parse_primary(parser: &mut Parser) -> ParseResult<Expr> {
         TokenType::String => Ok(Expr::Literal(LiteralExpr::String(
             token.source().to_string(),
         ))),
+        TokenType::Keyword(Keyword::True) => Ok(Expr::Literal(LiteralExpr::True)),
+        TokenType::Keyword(Keyword::False) => Ok(Expr::Literal(LiteralExpr::False)),
         TokenType::Identifier => {
             let ident = token.source().to_string();
 

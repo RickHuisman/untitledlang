@@ -8,8 +8,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 #[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),
-    True,
-    False,
+    Bool(bool),
     Nil,
     String(String),
     Closure(Gc<Closure>),
@@ -21,8 +20,7 @@ impl fmt::Display for Value {
         match self {
             Value::Number(n) => write!(f, "{}", n),
             Value::String(s) => write!(f, "{}", s),
-            Value::True => write!(f, "true"),
-            Value::False => write!(f, "false"),
+            Value::Bool(bool) => write!(f, "{}", bool),
             Value::Nil => write!(f, "nil"),
             Value::Closure(clos) => write!(f, "Closure({:?})", clos),
             Value::Function(fun) => write!(f, "Function({})", **fun),
@@ -33,7 +31,7 @@ impl fmt::Display for Value {
 impl From<&Value> for bool {
     fn from(value: &Value) -> Self {
         match value {
-            Value::False | Value::Nil => false,
+            Value::Bool(false) | Value::Nil => false,
             _ => true,
         }
     }
@@ -41,11 +39,7 @@ impl From<&Value> for bool {
 
 impl Into<Value> for bool {
     fn into(self) -> Value {
-        if self {
-            Value::True
-        } else {
-            Value::False
-        }
+        Value::Bool(self)
     }
 }
 
@@ -127,28 +121,26 @@ impl Neg for Value {
 
 impl PartialEq for Value {
     fn eq(&self, other: &Self) -> bool {
-        if let Value::Number(b) = self {
-            if let Value::Number(a) = other {
-                b == a
-            } else {
-                panic!("Operand must be a number.");
-            }
-        } else {
-            panic!("Operand must be a number.");
+        let b = self;
+        let a = other;
+
+        match (b, a) {
+            (Value::Number(b), Value::Number(a)) => b == a,
+            (Value::Bool(b), Value::Bool(a)) => b == a,
+            _ => false,
         }
     }
 }
 
 impl PartialOrd for Value {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if let Value::Number(b) = self {
-            if let Value::Number(a) = other {
-                b.partial_cmp(a)
-            } else {
-                panic!("Operand must be a number.");
-            }
-        } else {
-            panic!("Operand must be a number.");
+        let b = self;
+        let a = other;
+
+        match (b, a) {
+            (Value::Number(b), Value::Number(a)) => b.partial_cmp(a),
+            (Value::Bool(b), Value::Bool(a)) => b.partial_cmp(a),
+            _ => None,
         }
     }
 }

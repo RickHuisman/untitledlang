@@ -36,8 +36,7 @@ fn trim_newline(s: &mut String) {
 
 #[cfg(test)]
 mod tests {
-    use crate::compiler::compiler::compile;
-    use crate::vm::vm::VM;
+    use crate::vm::interpret_with_stdout;
     use regex::Regex;
     use std::fs;
     use std::io::Cursor;
@@ -63,36 +62,32 @@ mod tests {
     }
 
     fn extract_expects(source: &str) -> TestResult {
-        let expected_result =
-            if !parse_expects(source, Regex::new(r"\[line (\d+)\] (Error.+)").unwrap(), 2)
-                .is_empty()
-            {
-                TestResult::CompileError
-            } else if !parse_expects(source, Regex::new(r"// (Error.*)").unwrap(), 1).is_empty() {
-                TestResult::CompileError
-            } else if !parse_expects(
-                source,
-                Regex::new(r"// expect runtime error: (.+)").unwrap(),
-                1,
-            )
-            .is_empty()
-            {
-                TestResult::RuntimeError
-            } else {
-                TestResult::Ok
-            };
+        if !parse_expects(source, Regex::new(r"\[line (\d+)\] (Error.+)").unwrap(), 2).is_empty() {
+            return TestResult::CompileError;
+        }
 
-        expected_result
+        if !parse_expects(source, Regex::new(r"// (Error.*)").unwrap(), 1).is_empty() {
+            return TestResult::CompileError;
+        }
+
+        if !parse_expects(
+            source,
+            Regex::new(r"// expect runtime error: (.+)").unwrap(),
+            1,
+        )
+        .is_empty()
+        {
+            return TestResult::RuntimeError;
+        }
+
+        TestResult::Ok
     }
 
     fn execute(source: &str) -> (Vec<String>, TestResult) {
-        let fun = compile(source).unwrap();
-
         let mut output = vec![];
         let cursor = Cursor::new(&mut output);
 
-        let mut vm = VM::with_stdout(cursor);
-        let result = match vm.interpret(fun) {
+        let result = match interpret_with_stdout(source, cursor) {
             Ok(_) => TestResult::Ok,
             Err(err) => {
                 println!("Runtime error: {:?}", err);

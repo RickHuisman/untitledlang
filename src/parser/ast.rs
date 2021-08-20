@@ -103,6 +103,8 @@ pub type Identifier = String;
 pub enum LiteralExpr {
     Number(f64),
     String(String),
+    True,
+    False,
     Nil,
 }
 
