@@ -23,6 +23,9 @@ impl<W: Write> VM<W> {
                 Opcode::DefineGlobal => self.define_global()?,
                 Opcode::GetGlobal => self.get_global()?,
                 Opcode::SetGlobal => self.set_global()?,
+                Opcode::Jump => self.jump()?,
+                Opcode::JumpIfFalse => self.jump_if_false()?,
+                Opcode::Loop => self.loop_()?,
                 Opcode::Return => self.ret()?,
                 Opcode::Print => self.print()?,
                 Opcode::Pop => {
@@ -153,6 +156,27 @@ impl<W: Write> VM<W> {
         }
 
         Err(RuntimeError::UndefinedGlobal(name))
+    }
+
+    fn jump(&mut self) -> RunResult<()> {
+        let offset = self.read_short()?;
+        *self.frame_mut()?.ip_mut() += offset as usize;
+        Ok(())
+    }
+
+    fn jump_if_false(&mut self) -> RunResult<()> {
+        let offset = self.read_short()?;
+
+        if !bool::from(self.peek()?) {
+            *self.frame_mut()?.ip_mut() += offset as usize;
+        }
+        Ok(())
+    }
+
+    fn loop_(&mut self) -> RunResult<()> {
+        let offset = self.read_short()?;
+        *self.frame_mut()?.ip_mut() -= offset as usize;
+        Ok(())
     }
 
     fn ret(&mut self) -> RunResult<()> {

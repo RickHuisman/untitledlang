@@ -12,6 +12,7 @@ pub fn compile_expr(c: &mut Compiler, expr: Expr) {
         Expr::LetGet { ident } => compile_let_get(c, ident),
         Expr::LetSet { ident, expr } => compile_let_set(c, ident, expr),
         Expr::Fun { .. } => todo!(),
+        Expr::While { condition, body } => compile_while(c, condition, body),
         Expr::Block { block } => compile_block(c, block),
         Expr::Print { expr } => compile_print(c, expr),
         Expr::Literal(expr) => compile_literal(c, expr),
@@ -85,6 +86,19 @@ fn compile_let_set(compiler: &mut Compiler, ident: Identifier, expr: Box<Expr>) 
         let constant_id = compiler.current_chunk().add_constant(Value::String(ident));
         compiler.emit_byte(constant_id);
     }
+}
+
+fn compile_while(compiler: &mut Compiler, condition: Box<Expr>, body: Box<Expr>) {
+    let loop_start = compiler.current_chunk().code().len();
+    compile_expr(compiler,*condition);
+
+    let exit_jump = compiler.emit_jump(Opcode::JumpIfFalse);
+    compiler.emit(Opcode::Pop);
+    compile_expr(compiler, *body);
+
+    compiler.emit_loop(loop_start);
+    compiler.patch_jump(exit_jump);
+    compiler.emit(Opcode::Pop);
 }
 
 fn compile_block(compiler: &mut Compiler, block: BlockDecl) {

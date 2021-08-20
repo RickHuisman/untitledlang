@@ -103,6 +103,9 @@ fn disassemble_instruction(f: &mut Formatter<'_>, chunk: &Chunk, offset: &mut us
         Opcode::DefineGlobal => constant_instruction(chunk, f, "DEFINE_GLOBAL", offset),
         Opcode::GetGlobal => constant_instruction(chunk, f, "GET_GLOBAL", offset),
         Opcode::SetGlobal => constant_instruction(chunk, f, "SET_GLOBAL", offset),
+        Opcode::Jump => jump_instruction(chunk, f, "JUMP", 1, offset),
+        Opcode::JumpIfFalse => jump_instruction(chunk, f, "JUMP_IF_FALSE", 1, offset),
+        Opcode::Loop => jump_instruction(chunk, f, "LOOP", 0, offset), // TODO: sign should be -1.
         Opcode::Print => simple_instruction(f, "PRINT", offset),
         Opcode::Pop => simple_instruction(f, "POP", offset),
     }

@@ -18,7 +18,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub(crate) fn read_token(&mut self) -> LexResult<Option<Token<'a>>> {
+    pub fn read_token(&mut self) -> LexResult<Option<Token<'a>>> {
         self.skip_whitespace();
         if self.is_at_end() {
             return self.eof();

@@ -8,15 +8,16 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub(crate) fn new(tokens: &'a mut Vec<Token<'a>>) -> Self {
+    pub fn new(tokens: &'a mut Vec<Token<'a>>) -> Self {
         tokens.reverse();
         Parser { tokens }
     }
 
-    pub(crate) fn parse_top_level_expr(&mut self) -> ParseResult<Expr> {
+    pub fn parse_top_level_expr(&mut self) -> ParseResult<Expr> {
         match self.peek_type()? {
             TokenType::Keyword(Keyword::Let) => self.declare_let(),
             TokenType::Keyword(Keyword::Fun) => self.parse_fun(),
+            TokenType::Keyword(Keyword::While) => self.parse_while(),
             TokenType::Keyword(Keyword::Print) => self.parse_print(),
             TokenType::LeftBrace => self.parse_block(),
             _ => self.parse_expression_statement(),
@@ -53,6 +54,16 @@ impl<'a> Parser<'a> {
         let fun_decl = FunDecl::new(params, body);
 
         Ok(Expr::fun(ident, fun_decl))
+    }
+
+    fn parse_while(&mut self) -> ParseResult<Expr> {
+        // Consume "while".
+        self.expect(TokenType::Keyword(Keyword::While))?;
+        
+        let cond = self.expression()?;
+        let body = self.parse_block()?;
+
+        Ok(Expr::while_(cond, body))
     }
 
     fn parse_print(&mut self) -> ParseResult<Expr> {

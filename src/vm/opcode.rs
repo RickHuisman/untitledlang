@@ -20,6 +20,9 @@ pub enum Opcode {
     DefineGlobal,
     GetGlobal,
     SetGlobal,
+    Jump,
+    JumpIfFalse,
+    Loop,
     Print,
     Pop,
 }
@@ -43,8 +46,11 @@ impl From<u8> for Opcode {
             0x0d => Opcode::DefineGlobal,
             0x0e => Opcode::GetGlobal,
             0x0f => Opcode::SetGlobal,
-            0x10 => Opcode::Print,
-            0x11 => Opcode::Pop,
+            0x10 => Opcode::Jump,
+            0x11 => Opcode::JumpIfFalse,
+            0x12 => Opcode::Loop,
+            0x13 => Opcode::Print,
+            0x14 => Opcode::Pop,
             _ => panic!("No opcode for byte: {}", byte),
         }
     }

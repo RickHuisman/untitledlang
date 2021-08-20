@@ -81,7 +81,7 @@ impl<W: Write> VM<W> {
         Ok(byte)
     }
 
-    fn read_short(&mut self) -> RunResult<u16> {
+    pub(crate) fn read_short(&mut self) -> RunResult<u16> {
         *self.frame_mut()?.ip_mut() += 2;
 
         let lo_index = self.frame()?.ip() - 2;
@@ -120,7 +120,7 @@ impl<W: Write> VM<W> {
         self.frames.last().ok_or(RuntimeError::FrameEmpty)
     }
 
-    fn frame_mut(&mut self) -> RunResult<&mut CallFrame> {
+    pub(crate) fn frame_mut(&mut self) -> RunResult<&mut CallFrame> {
         self.frames.last_mut().ok_or(RuntimeError::FrameEmpty)
     }
 

@@ -33,6 +33,10 @@ pub enum Expr {
         ident: Identifier,
         decl: FunDecl,
     },
+    While {
+        condition: Box<Expr>,
+        body: Box<Expr>,
+    },
     Block {
         block: BlockDecl,
     },
@@ -84,6 +88,13 @@ impl Expr {
 
     pub fn fun(ident: Identifier, decl: FunDecl) -> Expr {
         Expr::Fun { ident, decl }
+    }
+
+    pub fn while_(condition: Expr, body: Expr) -> Expr {
+        Expr::While {
+            condition: Box::new(condition),
+            body: Box::new(body),
+        }
     }
 
     pub fn block(block: BlockDecl) -> Expr {

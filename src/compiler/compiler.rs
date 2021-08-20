@@ -12,7 +12,7 @@ pub struct Compiler {
 }
 
 impl Compiler {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Compiler {
             current: CompilerInstance::new(FunctionType::Script),
             errors: vec![],
@@ -92,6 +92,34 @@ impl Compiler {
         }
 
         fun_copy
+    }
+
+    pub fn emit_jump(&mut self, opcode: Opcode) -> usize {
+        self.emit(opcode);
+        self.emit_byte(0xff);
+        self.emit_byte(0xff);
+        self.current_chunk().code().len() - 2
+    }
+
+    pub fn emit_loop(&mut self, loop_start: usize) {
+        self.emit(Opcode::Loop);
+
+        let chunk = self.current_chunk();
+        let sub = chunk.code().len() - loop_start + 2;
+
+        let lo = ((sub >> 8) & 0xff) as u8;
+        let hi = (sub & 0xff) as u8;
+
+        self.emit_byte(lo);
+        self.emit_byte(hi);
+    }
+
+    pub fn patch_jump(&mut self, offset: usize) {
+        // -2 to adjust for the bytecode for the jump offset itself.
+        let jump = self.current_chunk().code().len() - offset - 2;
+
+        self.current_chunk().code_mut()[offset] = ((jump >> 8) & 0xff) as u8;
+        self.current_chunk().code_mut()[offset + 1] = (jump & 0xff) as u8;
     }
 
     pub fn emit_return(&mut self) {

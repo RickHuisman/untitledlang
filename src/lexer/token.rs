@@ -73,6 +73,7 @@ pub enum Keyword {
     True,
     False,
     Fun,
+    While,
     Print,
 }
 
@@ -85,6 +86,7 @@ impl FromStr for Keyword {
             "true" => Keyword::True,
             "false" => Keyword::False,
             "fun" => Keyword::Fun,
+            "while" => Keyword::While,
             "print" => Keyword::Print,
             _ => return Err(()),
         })
