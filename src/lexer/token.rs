@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 #[derive(Debug, PartialEq)]
 pub struct Token<'a> {
     token_type: TokenType,
@@ -61,34 +59,34 @@ pub enum TokenType {
     Number,
 
     // Keywords
-    Keyword(Keyword),
-    Identifier,
-
-    EOF,
-}
-
-#[derive(Debug, PartialEq, Clone)] // TODO Clone
-pub enum Keyword {
     Let,
     True,
     False,
     Fun,
     While,
+    For,
     Print,
+
+    Identifier,
+
+    EOF,
 }
 
-impl FromStr for Keyword {
-    type Err = ();
+pub trait ToKeyword {
+    fn to_keyword(self) -> Option<TokenType>;
+}
 
-    fn from_str(source: &str) -> Result<Self, Self::Err> {
-        Ok(match source {
-            "let" => Keyword::Let,
-            "true" => Keyword::True,
-            "false" => Keyword::False,
-            "fun" => Keyword::Fun,
-            "while" => Keyword::While,
-            "print" => Keyword::Print,
-            _ => return Err(()),
+impl ToKeyword for &str {
+    fn to_keyword(self) -> Option<TokenType> {
+        Some(match self {
+            "let" => TokenType::Let,
+            "true" => TokenType::True,
+            "false" => TokenType::False,
+            "fun" => TokenType::Fun,
+            "while" => TokenType::While,
+            "for" => TokenType::For,
+            "print" => TokenType::Print,
+            _ => return None,
         })
     }
 }

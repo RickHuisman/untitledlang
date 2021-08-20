@@ -1,4 +1,4 @@
-use crate::lexer::token::{Keyword, Token, TokenType};
+use crate::lexer::token::{Token, TokenType};
 use crate::parser::ast::*;
 use crate::parser::error::{ParseResult, ParserError};
 use crate::parser::expr_parser;
@@ -15,10 +15,11 @@ impl<'a> Parser<'a> {
 
     pub fn parse_top_level_expr(&mut self) -> ParseResult<Expr> {
         match self.peek_type()? {
-            TokenType::Keyword(Keyword::Let) => self.declare_let(),
-            TokenType::Keyword(Keyword::Fun) => self.parse_fun(),
-            TokenType::Keyword(Keyword::While) => self.parse_while(),
-            TokenType::Keyword(Keyword::Print) => self.parse_print(),
+            TokenType::Let => self.declare_let(),
+            TokenType::Fun => self.parse_fun(),
+            TokenType::While => self.parse_while(),
+            TokenType::For => self.parse_for(),
+            TokenType::Print => self.parse_print(),
             TokenType::LeftBrace => self.parse_block(),
             _ => self.parse_expression_statement(),
         }
@@ -26,7 +27,7 @@ impl<'a> Parser<'a> {
 
     fn declare_let(&mut self) -> ParseResult<Expr> {
         // Consume "let".
-        self.expect(TokenType::Keyword(Keyword::Let))?;
+        self.expect(TokenType::Let)?;
 
         let ident = self.parse_ident()?;
 
@@ -42,7 +43,7 @@ impl<'a> Parser<'a> {
 
     fn parse_fun(&mut self) -> ParseResult<Expr> {
         // Consume "fun".
-        self.expect(TokenType::Keyword(Keyword::Fun))?;
+        self.expect(TokenType::Fun)?;
 
         let ident = self.parse_ident()?;
 
@@ -58,16 +59,20 @@ impl<'a> Parser<'a> {
 
     fn parse_while(&mut self) -> ParseResult<Expr> {
         // Consume "while".
-        self.expect(TokenType::Keyword(Keyword::While))?;
-        
+        self.expect(TokenType::While)?;
+
         let cond = self.expression()?;
         let body = self.parse_block()?;
 
         Ok(Expr::while_(cond, body))
     }
 
+    fn parse_for(&mut self) -> ParseResult<Expr> {
+        todo!()
+    }
+
     fn parse_print(&mut self) -> ParseResult<Expr> {
-        self.expect(TokenType::Keyword(Keyword::Print))?;
+        self.expect(TokenType::Print)?;
         let expr = self.parse_expression_statement()?;
         Ok(Expr::print(expr))
     }

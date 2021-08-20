@@ -1,7 +1,7 @@
 use crate::lexer::error::{LexResult, SyntaxError};
 use crate::lexer::token::*;
 use std::iter::Peekable;
-use std::str::{CharIndices, FromStr};
+use std::str::CharIndices;
 
 pub struct Lexer<'a> {
     source: &'a str,
@@ -99,8 +99,7 @@ impl<'a> Lexer<'a> {
 
         let source = self.token_contents(start);
 
-        let token_type = Keyword::from_str(source)
-            .map(TokenType::Keyword)
+        let token_type = source.to_keyword()
             .unwrap_or(TokenType::Identifier);
 
         Ok(Some(self.make_token(token_type, start)))
@@ -256,7 +255,7 @@ mod tests {
     fn lex_keywords() {
         let expect = vec![
             Token::new(
-                TokenType::Keyword(Keyword::Let),
+                TokenType::Let,
                 "let",
                 Position::new(0, 3, 1),
             ),
@@ -265,7 +264,7 @@ mod tests {
             Token::new(TokenType::Number, "3", Position::new(8, 9, 1)),
             Token::new(TokenType::Semicolon, ";", Position::new(9, 10, 1)),
             Token::new(
-                TokenType::Keyword(Keyword::Let),
+                TokenType::Let,
                 "let",
                 Position::new(11, 14, 1),
             ),
