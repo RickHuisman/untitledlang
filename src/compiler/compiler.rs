@@ -60,7 +60,7 @@ impl Compiler {
         self.current.locals().get_at_current_depth(name).is_some()
     }
 
-    fn mark_local_initialized(&mut self) {
+    pub fn mark_local_initialized(&mut self) {
         if !self.is_scoped() {
             return;
         }
@@ -86,6 +86,8 @@ impl Compiler {
         // TODO: Clones???
         self.emit_return();
         let fun_copy = self.current.function().clone();
+
+        println!("{}", self.current_chunk());
 
         if let Some(enclosing) = *self.current.enclosing().clone() {
             self.current = enclosing;
@@ -155,6 +157,10 @@ impl Compiler {
 
     pub fn current_mut(&mut self) -> &mut CompilerInstance {
         &mut self.current
+    }
+
+    pub fn set_current(&mut self, instance: CompilerInstance) {
+        self.current = instance;
     }
 
     pub fn current_chunk(&mut self) -> &mut Chunk {

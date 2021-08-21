@@ -23,6 +23,8 @@ pub enum Opcode {
     Jump,
     JumpIfFalse,
     Loop,
+    Closure,
+    Call,
     Print,
     Pop,
 }
@@ -49,8 +51,10 @@ impl From<u8> for Opcode {
             0x10 => Opcode::Jump,
             0x11 => Opcode::JumpIfFalse,
             0x12 => Opcode::Loop,
-            0x13 => Opcode::Print,
-            0x14 => Opcode::Pop,
+            0x13 => Opcode::Closure,
+            0x14 => Opcode::Call,
+            0x15 => Opcode::Print,
+            0x16 => Opcode::Pop,
             _ => panic!("No opcode for byte: {}", byte),
         }
     }

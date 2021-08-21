@@ -19,7 +19,6 @@ impl CompilerInstance {
             locals: Locals::new(),
             enclosing: Box::new(None),
         }
-        // compiler.locals.insert(&String::new()); // TODO: Is this necessary?
     }
 
     pub fn resolve_local(&self, name: &str) -> CompileResult<Option<StackIndex>> {
@@ -52,5 +51,9 @@ impl CompilerInstance {
 
     pub fn enclosing(&self) -> &Box<Option<CompilerInstance>> {
         &self.enclosing
+    }
+
+    pub fn enclosing_mut(&mut self) -> &mut Box<Option<CompilerInstance>> {
+        &mut self.enclosing
     }
 }

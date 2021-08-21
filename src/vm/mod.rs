@@ -14,7 +14,6 @@ mod vm;
 pub fn interpret(source: &str) {
     // TODO: Report errors.
     let fun = compile(source).unwrap();
-    println!("{}", fun.chunk());
 
     let mut vm = VM::new();
     vm.interpret(fun).unwrap();

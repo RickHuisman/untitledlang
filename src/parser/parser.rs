@@ -21,6 +21,7 @@ impl<'a> Parser<'a> {
             TokenType::For => self.parse_for(),
             TokenType::Print => self.parse_print(),
             TokenType::LeftBrace => self.parse_block(),
+            TokenType::Return => self.parse_block(),
             _ => self.parse_expression_statement(),
         }
     }
@@ -48,11 +49,11 @@ impl<'a> Parser<'a> {
         let ident = self.parse_ident()?;
 
         self.expect(TokenType::LeftParen)?;
-        let params = self.parse_params()?;
+        let args = self.parse_args()?;
         self.expect(TokenType::RightParen)?;
 
         let body = self.block()?;
-        let fun_decl = FunDecl::new(params, body);
+        let fun_decl = FunDecl::new(args, body);
 
         Ok(Expr::fun(ident, fun_decl))
     }
@@ -85,7 +86,7 @@ impl<'a> Parser<'a> {
         Ok(Expr::block(self.block()?))
     }
 
-    pub fn parse_params(&mut self) -> ParseResult<Vec<Identifier>> {
+    pub fn parse_args(&mut self) -> ParseResult<Vec<Identifier>> {
         let mut params = vec![];
         while !self.check(&TokenType::RightParen)? && !self.check(&TokenType::EOF)? {
             params.push(self.parse_ident()?);
@@ -152,7 +153,7 @@ impl<'a> Parser<'a> {
         Ok(true)
     }
 
-    fn check(&self, token_type: &TokenType) -> ParseResult<bool> {
+    pub(crate) fn check(&self, token_type: &TokenType) -> ParseResult<bool> {
         Ok(self.peek_type()? == token_type)
     }
 

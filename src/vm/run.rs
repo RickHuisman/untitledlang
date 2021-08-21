@@ -2,6 +2,8 @@ use crate::vm::error::{RunResult, RuntimeError};
 use crate::vm::opcode::Opcode;
 use crate::vm::vm::VM;
 use std::io::Write;
+use crate::compiler::value::Value;
+use crate::compiler::object::Closure;
 
 impl<W: Write> VM<W> {
     pub fn run(&mut self) -> RunResult<()> {
@@ -27,6 +29,8 @@ impl<W: Write> VM<W> {
                 Opcode::JumpIfFalse => self.jump_if_false()?,
                 Opcode::Loop => self.loop_()?,
                 Opcode::Return => self.ret()?,
+                Opcode::Closure => self.closure()?,
+                Opcode::Call => self.call_instr()?,
                 Opcode::Print => self.print()?,
                 Opcode::Pop => {
                     self.pop()?;
@@ -188,6 +192,19 @@ impl<W: Write> VM<W> {
         }
 
         Err(RuntimeError::ReturnFromTopLevel)
+    }
+
+    fn closure(&mut self) -> RunResult<()> {
+        let closure = Closure::new(self.read_function()?);
+        let clos = self.alloc(closure);
+        self.push(Value::Closure(clos));
+        Ok(())
+    }
+
+    fn call_instr(&mut self) -> RunResult<()> {
+        let arity = self.read_byte()?;
+        self.call_value(arity);
+        Ok(())
     }
 
     fn print(&mut self) -> RunResult<()> {

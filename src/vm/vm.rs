@@ -34,7 +34,6 @@ impl<W: Write> VM<W> {
         let closure = self.alloc(Closure::new(Gc::new(fun)).clone());
         self.push(Value::Closure(closure));
         self.call_value(0);
-
         self.run()
     }
 
@@ -65,6 +64,13 @@ impl<W: Write> VM<W> {
     pub fn read_string(&mut self) -> RunResult<String> {
         match self.read_constant()? {
             Value::String(s) => Ok(s.clone()),
+            _ => Err(RuntimeError::ArgumentTypes),
+        }
+    }
+
+    pub fn read_function(&mut self) -> RunResult<Gc<Function>> {
+        match self.read_constant()? {
+            Value::Function(fun) => Ok(fun.clone()),
             _ => Err(RuntimeError::ArgumentTypes),
         }
     }

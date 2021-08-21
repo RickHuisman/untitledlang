@@ -106,6 +106,17 @@ fn disassemble_instruction(f: &mut Formatter<'_>, chunk: &Chunk, offset: &mut us
         Opcode::Jump => jump_instruction(chunk, f, "JUMP", 1, offset),
         Opcode::JumpIfFalse => jump_instruction(chunk, f, "JUMP_IF_FALSE", 1, offset),
         Opcode::Loop => jump_instruction(chunk, f, "LOOP", 0, offset), // TODO: sign should be -1.
+        Opcode::Closure => {
+            // TODO: Clean up.
+            *offset += 2;
+
+            let constant = chunk.code[*offset - 1];
+            write!(f, "{:-16} {:4} ", "CLOSURE", constant);
+            writeln!(f, "'{:?}'", chunk.constants()[constant as usize]);
+
+            *offset
+        }
+        Opcode::Call => byte_instruction(chunk, f, "CALL", offset),
         Opcode::Print => simple_instruction(f, "PRINT", offset),
         Opcode::Pop => simple_instruction(f, "POP", offset),
     }

@@ -45,7 +45,7 @@ impl From<&TokenType> for Precedence {
 }
 
 pub fn parse(parser: &mut Parser) -> ParseResult<Expr> {
-    parse_expr(parser, Precedence::None)
+    parse_expr(parser, Precedence::None) // TODO: Change to Precedence::Assignment?
 }
 
 fn parse_expr(parser: &mut Parser, precedence: Precedence) -> ParseResult<Expr> {
@@ -85,6 +85,7 @@ fn parse_infix(parser: &mut Parser, left: Expr) -> ParseResult<Expr> {
         | TokenType::Minus
         | TokenType::Star
         | TokenType::Slash => parse_binary(parser, left),
+        TokenType::LeftParen => parse_call(parser, left),
         _ => Err(ParserError::Unexpected(parser.peek_type()?.clone())),
     }
 }
@@ -112,6 +113,21 @@ fn parse_primary(parser: &mut Parser) -> ParseResult<Expr> {
         }
         _ => Err(ParserError::ExpectedPrimary(token.token_type().clone())),
     }
+}
+
+fn parse_call(parser: &mut Parser, left: Expr) -> ParseResult<Expr> {
+    parser.expect(TokenType::LeftParen);
+
+    let mut args = vec![];
+    if !parser.check(&TokenType::RightParen)? {
+        args.push(parser.expression()?);
+        while parser.match_(&TokenType::Comma)? {
+            args.push(parser.expression()?);
+        }
+    }
+    parser.expect(TokenType::RightParen)?;
+
+    Ok(Expr::call(left, args))
 }
 
 fn parse_binary(parser: &mut Parser, left: Expr) -> ParseResult<Expr> {

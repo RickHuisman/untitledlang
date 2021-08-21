@@ -66,6 +66,7 @@ pub enum TokenType {
     While,
     For,
     Print,
+    Return,
 
     Identifier,
 
@@ -86,6 +87,7 @@ impl ToKeyword for &str {
             "while" => TokenType::While,
             "for" => TokenType::For,
             "print" => TokenType::Print,
+            "return" => TokenType::Return,
             _ => return None,
         })
     }

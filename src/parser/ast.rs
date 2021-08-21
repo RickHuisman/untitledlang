@@ -33,12 +33,16 @@ pub enum Expr {
         ident: Identifier,
         decl: FunDecl,
     },
+    Call {
+        callee: Box<Expr>,
+        args: Vec<Expr>,
+    },
     While {
         condition: Box<Expr>,
         body: Box<Expr>,
     },
     Block {
-        block: BlockDecl,
+        block: Box<BlockDecl>,
     },
     Print {
         expr: Box<Expr>,
@@ -90,6 +94,10 @@ impl Expr {
         Expr::Fun { ident, decl }
     }
 
+    pub fn call(callee: Expr, args: Vec<Expr>) -> Expr {
+        Expr::Call { callee: Box::new(callee), args }
+    }
+
     pub fn while_(condition: Expr, body: Expr) -> Expr {
         Expr::While {
             condition: Box::new(condition),
@@ -98,7 +106,7 @@ impl Expr {
     }
 
     pub fn block(block: BlockDecl) -> Expr {
-        Expr::Block { block }
+        Expr::Block { block: Box::new(block) }
     }
 
     pub fn print(expr: Expr) -> Expr {
@@ -170,16 +178,20 @@ impl UnaryOperator {
 
 #[derive(PartialEq, Debug)]
 pub struct FunDecl {
-    params: Vec<Identifier>,
+    args: Vec<Identifier>,
     body: BlockDecl,
 }
 
 impl FunDecl {
-    pub fn new(params: Vec<Identifier>, body: BlockDecl) -> Self {
-        FunDecl { params, body }
+    pub fn new(args: Vec<Identifier>, body: BlockDecl) -> Self {
+        FunDecl { args, body }
     }
 
-    pub fn body(&self) -> &BlockDecl {
-        &self.body
+    pub fn args(&self) -> &Vec<Identifier> {
+        &self.args
+    }
+
+    pub fn body(self) -> BlockDecl {
+        self.body
     }
 }
