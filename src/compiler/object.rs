@@ -3,7 +3,7 @@ use crate::vm::obj::Gc;
 use std::fmt;
 use std::fmt::Formatter;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum FunctionType {
     Closure,
     Function,

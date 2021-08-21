@@ -21,7 +21,7 @@ impl<'a> Parser<'a> {
             TokenType::For => self.parse_for(),
             TokenType::Print => self.parse_print(),
             TokenType::LeftBrace => self.parse_block(),
-            TokenType::Return => self.parse_block(),
+            TokenType::Return => self.parse_return(),
             _ => self.parse_expression_statement(),
         }
     }
@@ -84,6 +84,20 @@ impl<'a> Parser<'a> {
 
     fn parse_block(&mut self) -> ParseResult<Expr> {
         Ok(Expr::block(self.block()?))
+    }
+
+    fn parse_return(&mut self) -> ParseResult<Expr> {
+        self.expect(TokenType::Return)?;
+
+        let expr = if self.match_(&TokenType::Semicolon)? {
+            // return;
+            None
+        } else {
+            // return <expr>;
+            Some(self.parse_top_level_expr()?)
+        };
+
+        Ok(Expr::return_(expr))
     }
 
     pub fn parse_args(&mut self) -> ParseResult<Vec<Identifier>> {

@@ -5,6 +5,7 @@ use crate::vm::opcode::Opcode;
 use crate::compiler::object::{Closure, Function, FunctionType};
 use crate::vm::obj::Gc;
 use crate::compiler::instance::CompilerInstance;
+use crate::compiler::error::CompilerError;
 
 pub fn compile_expr(c: &mut Compiler, expr: Expr) {
     match expr {
@@ -19,6 +20,7 @@ pub fn compile_expr(c: &mut Compiler, expr: Expr) {
         Expr::While { condition, body } => compile_while(c, condition, body),
         Expr::Block { block } => compile_block(c, block),
         Expr::Print { expr } => compile_print(c, expr),
+        Expr::Return { expr } => compile_return(c, expr),
         Expr::Literal(expr) => compile_literal(c, expr),
     }
 }
@@ -212,6 +214,19 @@ fn compile_block(compiler: &mut Compiler, block: Box<BlockDecl>) {
 fn compile_print(compiler: &mut Compiler, expr: Box<Expr>) {
     compile_expr(compiler, *expr);
     compiler.emit(Opcode::Print);
+}
+
+fn compile_return(compiler: &mut Compiler, expr: Option<Box<Expr>>) {
+    if compiler.current().function_type() == &FunctionType::Script {
+        compiler.add_error(CompilerError::LocalNotInitialized);
+    }
+
+    if let Some(expr) = expr {
+        compile_expr(compiler, *expr);
+        compiler.emit(Opcode::Return);
+    } else {
+        compiler.emit_return()
+    }
 }
 
 fn compile_literal(compiler: &mut Compiler, literal: LiteralExpr) {

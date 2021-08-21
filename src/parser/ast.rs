@@ -47,6 +47,9 @@ pub enum Expr {
     Print {
         expr: Box<Expr>,
     },
+    Return {
+        expr: Option<Box<Expr>>,
+    },
     Literal(LiteralExpr),
 }
 
@@ -112,6 +115,18 @@ impl Expr {
     pub fn print(expr: Expr) -> Expr {
         Expr::Print {
             expr: Box::new(expr),
+        }
+    }
+
+    pub fn return_(expr: Option<Expr>) -> Expr {
+        // TODO: Clean up.
+        let foo = match expr {
+            Some(e) => Some(Box::new(e)),
+            None => None
+        };
+
+        Expr::Return {
+            expr: foo,
         }
     }
 }

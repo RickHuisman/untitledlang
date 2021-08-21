@@ -41,6 +41,10 @@ impl CompilerInstance {
         &mut self.function
     }
 
+    pub fn function_type(&self) -> &FunctionType {
+        &self.function_type
+    }
+
     pub fn locals(&self) -> &Locals {
         &self.locals
     }
