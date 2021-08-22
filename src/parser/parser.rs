@@ -167,7 +167,7 @@ impl<'a> Parser<'a> {
         Ok(true)
     }
 
-    pub(crate) fn check(&self, token_type: &TokenType) -> ParseResult<bool> {
+    pub fn check(&self, token_type: &TokenType) -> ParseResult<bool> {
         Ok(self.peek_type()? == token_type)
     }
 

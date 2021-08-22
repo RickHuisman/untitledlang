@@ -116,7 +116,7 @@ fn parse_primary(parser: &mut Parser) -> ParseResult<Expr> {
 }
 
 fn parse_call(parser: &mut Parser, left: Expr) -> ParseResult<Expr> {
-    parser.expect(TokenType::LeftParen);
+    parser.expect(TokenType::LeftParen)?;
 
     let mut args = vec![];
     if !parser.check(&TokenType::RightParen)? {

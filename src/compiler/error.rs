@@ -4,5 +4,5 @@ pub type CompileResult<T> = std::result::Result<T, CompilerError>;
 pub enum CompilerError {
     LocalAlreadyDefined,
     LocalNotInitialized,
-    ReturnFromTopLevel,
+    InvalidReturn,
 }

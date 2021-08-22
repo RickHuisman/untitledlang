@@ -43,12 +43,12 @@ impl Compiler {
     }
 
     pub fn resolve_local(&mut self, name: &str) -> Option<StackIndex> {
-        match self.current().resolve_local(name) {
+        match self.current.resolve_local(name) {
+            Ok(local) => local,
             Err(error) => {
                 self.add_error(error);
                 None
             }
-            Ok(local) => local,
         }
     }
 
@@ -56,6 +56,7 @@ impl Compiler {
         self.current.locals_mut().insert(ident);
     }
 
+    // TODO: Rename.
     pub fn contains_local_in_current_scope(&self, name: &str) -> bool {
         self.current.locals().get_at_current_depth(name).is_some()
     }
@@ -65,21 +66,21 @@ impl Compiler {
             return;
         }
 
-        self.current_mut().locals_mut().mark_initialized();
+        self.current.locals_mut().mark_initialized();
     }
 
     pub fn begin_scope(&mut self) {
-        self.current_mut().locals_mut().begin_scope();
+        self.current.locals_mut().begin_scope();
     }
 
     pub fn end_scope(&mut self) {
-        for _ in self.current_mut().locals_mut().end_scope().iter().rev() {
+        for _ in self.current.locals_mut().end_scope().iter().rev() {
             self.emit(Opcode::Pop);
         }
     }
 
     pub fn is_scoped(&self) -> bool {
-        self.current().locals().scope_depth() > 0
+        self.current.locals().scope_depth() > 0
     }
 
     pub fn end_compiler(&mut self) -> Function {
@@ -124,6 +125,14 @@ impl Compiler {
         self.current_chunk().code_mut()[offset + 1] = (jump & 0xff) as u8;
     }
 
+    pub fn add_error(&mut self, error: CompilerError) {
+        self.errors.push(error);
+    }
+
+    pub fn add_constant(&mut self, value: Value) -> u8 {
+        self.current_chunk().add_constant(value)
+    }
+
     pub fn emit_return(&mut self) {
         // self.emit(Opcode::Nil); // TODO: Return Nil???
         self.emit(Opcode::Return);
@@ -139,10 +148,6 @@ impl Compiler {
         self.emit_constant(Value::String(s.to_string()));
     }
 
-    pub fn add_error(&mut self, error: CompilerError) {
-        self.errors.push(error);
-    }
-
     pub fn emit(&mut self, opcode: Opcode) {
         self.current_chunk().write(opcode, 123); // TODO Line
     }
@@ -151,16 +156,14 @@ impl Compiler {
         self.current_chunk().write_byte(byte);
     }
 
-    pub fn current(&self) -> &CompilerInstance {
-        &self.current
+    pub fn function_type(&self) -> &FunctionType {
+        &self.current.function_type()
     }
 
-    pub fn current_mut(&mut self) -> &mut CompilerInstance {
-        &mut self.current
-    }
-
-    pub fn set_current(&mut self, instance: CompilerInstance) {
+    pub fn set_instance(&mut self, instance: CompilerInstance) {
+        let current_copy = self.current.clone();
         self.current = instance;
+        *self.current.enclosing_mut() = Box::new(Some(current_copy));
     }
 
     pub fn current_chunk(&mut self) -> &mut Chunk {

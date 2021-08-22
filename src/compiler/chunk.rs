@@ -29,7 +29,7 @@ impl Chunk {
         self.code.push(byte);
     }
 
-    pub fn add_constant(&mut self, value: Value) -> u8 {
+    pub fn add_constant(&mut self, value: Value) -> u8 { // TODO: u8 or usize?
         self.constants.push(value);
         self.constants.len() as u8 - 1
     }
@@ -50,7 +50,7 @@ impl Chunk {
         &self.constants[index]
     }
 
-    pub fn constants(&self) -> &Vec<Value> {
+    pub fn constants(&self) -> &[Value] {
         &self.constants
     }
 }

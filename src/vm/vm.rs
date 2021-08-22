@@ -33,7 +33,7 @@ impl<W: Write> VM<W> {
     pub fn interpret(&mut self, fun: Function) -> RunResult<()> {
         let closure = self.alloc(Closure::new(Gc::new(fun)).clone());
         self.push(Value::Closure(closure));
-        self.call_value(0);
+        self.call_value(0)?;
         self.run()
     }
 
@@ -42,7 +42,7 @@ impl<W: Write> VM<W> {
         let callee = self.stack[frame_start].clone();
 
         match callee {
-            Value::Closure(c) => self.call(c, arity),
+            Value::Closure(c) => self.call(c, arity)?,
             _ => return Err(RuntimeError::InvalidCallee),
         };
 
@@ -87,7 +87,7 @@ impl<W: Write> VM<W> {
         Ok(byte)
     }
 
-    pub(crate) fn read_short(&mut self) -> RunResult<u16> {
+    pub fn read_short(&mut self) -> RunResult<u16> {
         *self.frame_mut()?.ip_mut() += 2;
 
         let lo_index = self.frame()?.ip() - 2;
@@ -126,7 +126,7 @@ impl<W: Write> VM<W> {
         self.frames.last().ok_or(RuntimeError::FrameEmpty)
     }
 
-    pub(crate) fn frame_mut(&mut self) -> RunResult<&mut CallFrame> {
+    pub fn frame_mut(&mut self) -> RunResult<&mut CallFrame> {
         self.frames.last_mut().ok_or(RuntimeError::FrameEmpty)
     }
 

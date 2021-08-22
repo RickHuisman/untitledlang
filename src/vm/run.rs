@@ -203,7 +203,7 @@ impl<W: Write> VM<W> {
 
     fn call_instr(&mut self) -> RunResult<()> {
         let arity = self.read_byte()?;
-        self.call_value(arity);
+        self.call_value(arity)?;
         Ok(())
     }
 

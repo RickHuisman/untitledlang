@@ -37,16 +37,20 @@ impl Function {
         }
     }
 
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    pub fn set_arity(&mut self, arity: u8) {
+        self.arity = arity;
+    }
+
     pub fn chunk(&self) -> &Chunk {
         &self.chunk
     }
 
     pub fn arity(&self) -> &u8 {
         &self.arity
-    }
-
-    pub fn name_mut(&mut self) -> &mut String {
-        &mut self.name
     }
 
     pub fn chunk_mut(&mut self) -> &mut Chunk {

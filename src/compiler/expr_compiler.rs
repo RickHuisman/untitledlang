@@ -2,7 +2,7 @@ use crate::compiler::compiler::Compiler;
 use crate::compiler::value::Value;
 use crate::parser::ast::{BinaryOperator, BlockDecl, Expr, Identifier, LiteralExpr, UnaryOperator, FunDecl};
 use crate::vm::opcode::Opcode;
-use crate::compiler::object::{Closure, Function, FunctionType};
+use crate::compiler::object::FunctionType;
 use crate::vm::obj::Gc;
 use crate::compiler::instance::CompilerInstance;
 use crate::compiler::error::CompilerError;
@@ -74,7 +74,7 @@ fn compile_let_get(compiler: &mut Compiler, ident: Identifier) {
     } else {
         // Global variable
         compiler.emit(Opcode::GetGlobal);
-        let constant_id = compiler.current_chunk().add_constant(Value::String(ident));
+        let constant_id = compiler.add_constant(Value::String(ident));
         compiler.emit_byte(constant_id);
     }
 }
@@ -89,103 +89,54 @@ fn compile_let_set(compiler: &mut Compiler, ident: Identifier, expr: Box<Expr>) 
     } else {
         // Global variable
         compiler.emit(Opcode::SetGlobal);
-        let constant_id = compiler.current_chunk().add_constant(Value::String(ident));
+        let constant_id = compiler.add_constant(Value::String(ident));
         compiler.emit_byte(constant_id);
     }
 }
 
 fn compile_function(compiler: &mut Compiler, ident: Identifier, decl: FunDecl) {
-    // compiler.declare_variable(&ident);
-    // if compiler.is_scoped() {
-    //     compiler.mark_local_initialized();
-    // }
-    //
-    // compile_closure(compiler, &ident, decl);
-    //
-    // compiler.define_variable(&ident);
+    compiler.set_instance(
+        CompilerInstance::new(FunctionType::Function)
+    );
 
-    let current_copy = compiler.current().clone();
-    compiler.set_current(CompilerInstance::new(FunctionType::Function));
-    *compiler.current_mut().enclosing_mut() = Box::new(Some(current_copy));
+    compile_closure(compiler, &ident, decl);
 
-    // TODO: Set fun name.
-    // *compiler.current_mut().function_mut().name_mut() = ident.clone();
-    // *compiler.current_mut().function_mut().chunk_mut().name_mut() = Some(ident.clone());
+    compiler.define_variable(&ident);
+}
 
+fn compile_closure(compiler: &mut Compiler, ident: &Identifier, decl: FunDecl) {
     compiler.begin_scope();
+
+    let arity = decl.args().len();
 
     // Compile arguments.
     for arg in decl.args() {
-        *compiler.current_mut().function_mut().arity_mut() += 1;
         compiler.declare_variable(arg);
+        compiler.define_variable(arg);
     }
 
     // Compile body.
-    compile_expr(compiler, Expr::block(decl.body()));
+    compile_expr(compiler, Expr::block(decl.body())); // TODO: Create new Block expr?
 
     // Create the function object.
-    let fun = compiler.end_compiler();
-    // TODO: Set fun name here.
+    let mut fun = compiler.end_compiler();
+    fun.set_name(ident.clone());
+    fun.set_arity(arity as u8);
 
     compiler.emit(Opcode::Closure);
 
     let constant_id = compiler
-        .current_chunk()
         .add_constant(Value::Function(Gc::new(fun)));
-
     compiler.emit_byte(constant_id);
-
-    compiler.define_variable(&ident); // TODO fun is always global?
-}
-
-fn compile_closure(compiler: &mut Compiler, ident: &Identifier, decl: FunDecl) {
-    // let (chunk_index, upvalues) =
-    //     compiler.with_scoped_context(context_type, |compiler| {
-    //         for arg in args {
-    //             declare_variable(compiler, &arg.value);
-    //             define_variable(compiler, &arg.value);
-    //         }
-    //
-    //         compile_ast(compiler, block);
-    //
-    //         {
-    //             let expr: Option<Box<WithSpan<Expr>>> = None;
-    //             compile_return(compiler, expr.as_ref());
-    //         }
-    //     });
-
-    // let function = Function::new(
-    //     name: identifier.value.into(),
-    //     chunk_index,
-    //     arity: decl..len(),
-    // );
-    //
-    // // let closure = Closure::new(function);
-    //
-    // compiler.emit(Opcode::Closure);
-    //
-    // let constant_id = compiler
-    //     .current_chunk()
-    //     .add_constant(Value::Function(Gc::new(fun)));
-    //
-    // compiler.emit_byte(constant_id);
-
-    // let constant = compiler.add_constant(Constant::Closure(closure));
-    // compiler.add_instruction(Instruction::Closure(constant));
 }
 
 fn compile_call(compiler: &mut Compiler, callee: Box<Expr>, args: Vec<Expr>) {
     let arity = args.len();
-    if arity > 8 {
-        panic!() // TODO
-    }
 
     compile_expr(compiler, *callee);
-
     for arg in args {
         compile_expr(compiler, arg);
     }
-
     compiler.emit(Opcode::Call);
     compiler.emit_byte(arity as u8);
 }
@@ -217,8 +168,8 @@ fn compile_print(compiler: &mut Compiler, expr: Box<Expr>) {
 }
 
 fn compile_return(compiler: &mut Compiler, expr: Option<Box<Expr>>) {
-    if compiler.current().function_type() == &FunctionType::Script {
-        compiler.add_error(CompilerError::LocalNotInitialized);
+    if compiler.function_type() == &FunctionType::Script {
+        compiler.add_error(CompilerError::InvalidReturn);
     }
 
     if let Some(expr) = expr {
