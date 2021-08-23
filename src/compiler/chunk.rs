@@ -29,7 +29,8 @@ impl Chunk {
         self.code.push(byte);
     }
 
-    pub fn add_constant(&mut self, value: Value) -> u8 { // TODO: u8 or usize?
+    pub fn add_constant(&mut self, value: Value) -> u8 {
+        // TODO: u8 or usize?
         self.constants.push(value);
         self.constants.len() as u8 - 1
     }

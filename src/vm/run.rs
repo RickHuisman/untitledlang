@@ -1,9 +1,9 @@
+use crate::compiler::object::Closure;
+use crate::compiler::value::Value;
 use crate::vm::error::{RunResult, RuntimeError};
 use crate::vm::opcode::Opcode;
 use crate::vm::vm::VM;
 use std::io::Write;
-use crate::compiler::value::Value;
-use crate::compiler::object::Closure;
 
 impl<W: Write> VM<W> {
     pub fn run(&mut self) -> RunResult<()> {

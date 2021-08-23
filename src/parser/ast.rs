@@ -41,6 +41,11 @@ pub enum Expr {
         condition: Box<Expr>,
         body: Box<Expr>,
     },
+    IfElse {
+        condition: Box<Expr>,
+        then: BlockDecl,
+        else_: Option<BlockDecl>,
+    },
     Block {
         block: Box<BlockDecl>,
     },
@@ -54,13 +59,13 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn grouping(expr: Expr) -> Expr {
+    pub fn grouping(expr: Expr) -> Self {
         Expr::Grouping {
             expr: Box::new(expr),
         }
     }
 
-    pub fn binary(left: Expr, op: BinaryOperator, right: Expr) -> Expr {
+    pub fn binary(left: Expr, op: BinaryOperator, right: Expr) -> Self {
         Expr::Binary {
             left: Box::new(left),
             op,
@@ -68,66 +73,77 @@ impl Expr {
         }
     }
 
-    pub fn unary(op: UnaryOperator, expr: Expr) -> Expr {
+    pub fn unary(op: UnaryOperator, expr: Expr) -> Self {
         Expr::Unary {
             op,
             expr: Box::new(expr),
         }
     }
 
-    pub fn let_assign(ident: Identifier, initializer: Expr) -> Expr {
+    pub fn let_assign(ident: Identifier, initializer: Expr) -> Self {
         Expr::LetAssign {
             ident,
             initializer: Box::new(initializer),
         }
     }
 
-    pub fn let_get(ident: Identifier) -> Expr {
+    pub fn let_get(ident: Identifier) -> Self {
         Expr::LetGet { ident }
     }
 
-    pub fn let_set(ident: Identifier, expr: Expr) -> Expr {
+    pub fn let_set(ident: Identifier, expr: Expr) -> Self {
         Expr::LetSet {
             ident,
             expr: Box::new(expr),
         }
     }
 
-    pub fn fun(ident: Identifier, decl: FunDecl) -> Expr {
+    pub fn fun(ident: Identifier, decl: FunDecl) -> Self {
         Expr::Fun { ident, decl }
     }
 
-    pub fn call(callee: Expr, args: Vec<Expr>) -> Expr {
-        Expr::Call { callee: Box::new(callee), args }
+    pub fn call(callee: Expr, args: Vec<Expr>) -> Self {
+        Expr::Call {
+            callee: Box::new(callee),
+            args,
+        }
     }
 
-    pub fn while_(condition: Expr, body: Expr) -> Expr {
+    pub fn while_(condition: Expr, body: Expr) -> Self {
         Expr::While {
             condition: Box::new(condition),
             body: Box::new(body),
         }
     }
 
-    pub fn block(block: BlockDecl) -> Expr {
-        Expr::Block { block: Box::new(block) }
+    pub fn if_else(condition: Expr, then: BlockDecl, else_: Option<BlockDecl>) -> Self {
+        Expr::IfElse {
+            condition: Box::new(condition),
+            then,
+            else_,
+        }
     }
 
-    pub fn print(expr: Expr) -> Expr {
+    pub fn block(block: BlockDecl) -> Self {
+        Expr::Block {
+            block: Box::new(block),
+        }
+    }
+
+    pub fn print(expr: Expr) -> Self {
         Expr::Print {
             expr: Box::new(expr),
         }
     }
 
-    pub fn return_(expr: Option<Expr>) -> Expr {
+    pub fn return_(expr: Option<Expr>) -> Self {
         // TODO: Clean up.
         let foo = match expr {
             Some(e) => Some(Box::new(e)),
-            None => None
+            None => None,
         };
 
-        Expr::Return {
-            expr: foo,
-        }
+        Expr::Return { expr: foo }
     }
 }
 

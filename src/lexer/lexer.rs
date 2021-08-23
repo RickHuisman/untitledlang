@@ -99,8 +99,7 @@ impl<'a> Lexer<'a> {
 
         let source = self.token_contents(start);
 
-        let token_type = source.to_keyword()
-            .unwrap_or(TokenType::Identifier);
+        let token_type = source.to_keyword().unwrap_or(TokenType::Identifier);
 
         Ok(Some(self.make_token(token_type, start)))
     }
@@ -254,20 +253,12 @@ mod tests {
     #[test]
     fn lex_keywords() {
         let expect = vec![
-            Token::new(
-                TokenType::Let,
-                "let",
-                Position::new(0, 3, 1),
-            ),
+            Token::new(TokenType::Let, "let", Position::new(0, 3, 1)),
             Token::new(TokenType::Identifier, "x", Position::new(4, 5, 1)),
             Token::new(TokenType::Equal, "=", Position::new(6, 7, 1)),
             Token::new(TokenType::Number, "3", Position::new(8, 9, 1)),
             Token::new(TokenType::Semicolon, ";", Position::new(9, 10, 1)),
-            Token::new(
-                TokenType::Let,
-                "let",
-                Position::new(11, 14, 1),
-            ),
+            Token::new(TokenType::Let, "let", Position::new(11, 14, 1)),
             Token::new(TokenType::Identifier, "y", Position::new(15, 16, 1)),
             Token::new(TokenType::Equal, "=", Position::new(17, 18, 1)),
             Token::new(TokenType::Number, "5", Position::new(19, 20, 1)),

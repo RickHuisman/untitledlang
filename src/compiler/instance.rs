@@ -13,7 +13,7 @@ pub struct CompilerInstance {
 
 impl CompilerInstance {
     pub fn new(function_type: FunctionType) -> Self {
-        let mut  instance = CompilerInstance {
+        let mut instance = CompilerInstance {
             function: Function::new(),
             function_type,
             locals: Locals::new(),

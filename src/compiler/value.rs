@@ -49,9 +49,7 @@ impl Add for Value {
 
     fn add(self, other: Self) -> Self::Output {
         match (self, other) {
-            (Value::Number(b), Value::Number(a)) => {
-                Value::Number(b + a)
-            }
+            (Value::Number(b), Value::Number(a)) => Value::Number(b + a),
             _ => panic!("Operand must be a number."),
         }
     }
@@ -62,9 +60,7 @@ impl Sub for Value {
 
     fn sub(self, other: Self) -> Self::Output {
         match (self, other) {
-            (Value::Number(b), Value::Number(a)) => {
-                Value::Number(b - a)
-            }
+            (Value::Number(b), Value::Number(a)) => Value::Number(b - a),
             _ => panic!("Operand must be a number."),
         }
     }
@@ -75,9 +71,7 @@ impl Mul for Value {
 
     fn mul(self, other: Self) -> Self::Output {
         match (self, other) {
-            (Value::Number(b), Value::Number(a)) => {
-                Value::Number(b * a)
-            }
+            (Value::Number(b), Value::Number(a)) => Value::Number(b * a),
             _ => panic!("Operand must be a number."),
         }
     }
@@ -88,9 +82,7 @@ impl Div for Value {
 
     fn div(self, other: Self) -> Self::Output {
         match (self, other) {
-            (Value::Number(b), Value::Number(a)) => {
-                Value::Number(b / a)
-            }
+            (Value::Number(b), Value::Number(a)) => Value::Number(b / a),
             _ => panic!("Operand must be a number."),
         }
     }

@@ -65,6 +65,8 @@ pub enum TokenType {
     Fun,
     While,
     For,
+    If,
+    Else,
     Print,
     Return,
 
@@ -86,6 +88,8 @@ impl ToKeyword for &str {
             "fun" => TokenType::Fun,
             "while" => TokenType::While,
             "for" => TokenType::For,
+            "if" => TokenType::If,
+            "else" => TokenType::Else,
             "print" => TokenType::Print,
             "return" => TokenType::Return,
             _ => return None,

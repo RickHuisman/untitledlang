@@ -19,6 +19,7 @@ impl<'a> Parser<'a> {
             TokenType::Fun => self.parse_fun(),
             TokenType::While => self.parse_while(),
             TokenType::For => self.parse_for(),
+            TokenType::If => self.parse_if(),
             TokenType::Print => self.parse_print(),
             TokenType::LeftBrace => self.parse_block(),
             TokenType::Return => self.parse_return(),
@@ -70,6 +71,21 @@ impl<'a> Parser<'a> {
 
     fn parse_for(&mut self) -> ParseResult<Expr> {
         todo!()
+    }
+
+    fn parse_if(&mut self) -> ParseResult<Expr> {
+        // Consume "if".
+        self.expect(TokenType::If)?;
+
+        let cond = self.expression()?;
+        let then = self.block()?;
+        let else_clause = if self.match_(&TokenType::Else)? {
+            Some(self.block()?)
+        } else {
+            None
+        };
+
+        Ok(Expr::if_else(cond, then, else_clause))
     }
 
     fn parse_print(&mut self) -> ParseResult<Expr> {

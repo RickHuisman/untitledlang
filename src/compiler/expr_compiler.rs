@@ -1,11 +1,13 @@
 use crate::compiler::compiler::Compiler;
-use crate::compiler::value::Value;
-use crate::parser::ast::{BinaryOperator, BlockDecl, Expr, Identifier, LiteralExpr, UnaryOperator, FunDecl};
-use crate::vm::opcode::Opcode;
-use crate::compiler::object::FunctionType;
-use crate::vm::obj::Gc;
-use crate::compiler::instance::CompilerInstance;
 use crate::compiler::error::CompilerError;
+use crate::compiler::instance::CompilerInstance;
+use crate::compiler::object::FunctionType;
+use crate::compiler::value::Value;
+use crate::parser::ast::{
+    BinaryOperator, BlockDecl, Expr, FunDecl, Identifier, LiteralExpr, UnaryOperator,
+};
+use crate::vm::obj::Gc;
+use crate::vm::opcode::Opcode;
 
 pub fn compile_expr(c: &mut Compiler, expr: Expr) {
     match expr {
@@ -18,6 +20,11 @@ pub fn compile_expr(c: &mut Compiler, expr: Expr) {
         Expr::Fun { ident, decl } => compile_function(c, ident, decl),
         Expr::Call { callee, args } => compile_call(c, callee, args),
         Expr::While { condition, body } => compile_while(c, condition, body),
+        Expr::IfElse {
+            condition,
+            then,
+            else_,
+        } => compile_if_else(c, condition, then, else_),
         Expr::Block { block } => compile_block(c, block),
         Expr::Print { expr } => compile_print(c, expr),
         Expr::Return { expr } => compile_return(c, expr),
@@ -95,9 +102,7 @@ fn compile_let_set(compiler: &mut Compiler, ident: Identifier, expr: Box<Expr>) 
 }
 
 fn compile_function(compiler: &mut Compiler, ident: Identifier, decl: FunDecl) {
-    compiler.set_instance(
-        CompilerInstance::new(FunctionType::Function)
-    );
+    compiler.set_instance(CompilerInstance::new(FunctionType::Function));
 
     compile_closure(compiler, &ident, decl);
 
@@ -125,8 +130,7 @@ fn compile_closure(compiler: &mut Compiler, ident: &Identifier, decl: FunDecl) {
 
     compiler.emit(Opcode::Closure);
 
-    let constant_id = compiler
-        .add_constant(Value::Function(Gc::new(fun)));
+    let constant_id = compiler.add_constant(Value::Function(Gc::new(fun)));
     compiler.emit_byte(constant_id);
 }
 
@@ -152,6 +156,36 @@ fn compile_while(compiler: &mut Compiler, condition: Box<Expr>, body: Box<Expr>)
     compiler.emit_loop(loop_start);
     compiler.patch_jump(exit_jump);
     compiler.emit(Opcode::Pop);
+}
+
+fn compile_if_else(
+    compiler: &mut Compiler,
+    condition: Box<Expr>,
+    then: BlockDecl,
+    else_: Option<BlockDecl>
+) {
+    compile_expr(compiler, *condition);
+
+    // Jump to else clause if false
+    let then_jump = compiler.emit_jump(Opcode::JumpIfFalse);
+    compiler.emit(Opcode::Pop);
+
+    for expr in then {
+        compile_expr(compiler, expr);
+    }
+
+    let else_jump = compiler.emit_jump(Opcode::Jump);
+
+    compiler.patch_jump(then_jump);
+    compiler.emit(Opcode::Pop);
+
+    if let Some(exprs) = else_ {
+        for expr in exprs {
+            compile_expr(compiler, expr);
+        }
+    }
+
+    compiler.patch_jump(else_jump);
 }
 
 fn compile_block(compiler: &mut Compiler, block: Box<BlockDecl>) {
