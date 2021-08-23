@@ -48,14 +48,11 @@ impl Add for Value {
     type Output = Self;
 
     fn add(self, other: Self) -> Self::Output {
-        if let Value::Number(b) = self {
-            if let Value::Number(a) = other {
+        match (self, other) {
+            (Value::Number(b), Value::Number(a)) => {
                 Value::Number(b + a)
-            } else {
-                panic!("Operand must be a number.");
             }
-        } else {
-            panic!("Operand must be a number.");
+            _ => panic!("Operand must be a number."),
         }
     }
 }
@@ -64,14 +61,11 @@ impl Sub for Value {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
-        if let Value::Number(b) = self {
-            if let Value::Number(a) = other {
+        match (self, other) {
+            (Value::Number(b), Value::Number(a)) => {
                 Value::Number(b - a)
-            } else {
-                panic!("Operand must be a number.");
             }
-        } else {
-            panic!("Operand must be a number.");
+            _ => panic!("Operand must be a number."),
         }
     }
 }
@@ -80,14 +74,11 @@ impl Mul for Value {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self::Output {
-        if let Value::Number(b) = self {
-            if let Value::Number(a) = other {
+        match (self, other) {
+            (Value::Number(b), Value::Number(a)) => {
                 Value::Number(b * a)
-            } else {
-                panic!("Operand must be a number.");
             }
-        } else {
-            panic!("Operand must be a number.");
+            _ => panic!("Operand must be a number."),
         }
     }
 }
@@ -96,14 +87,11 @@ impl Div for Value {
     type Output = Self;
 
     fn div(self, other: Self) -> Self::Output {
-        if let Value::Number(b) = self {
-            if let Value::Number(a) = other {
+        match (self, other) {
+            (Value::Number(b), Value::Number(a)) => {
                 Value::Number(b / a)
-            } else {
-                panic!("Operand must be a number.");
             }
-        } else {
-            panic!("Operand must be a number.");
+            _ => panic!("Operand must be a number."),
         }
     }
 }
@@ -114,7 +102,7 @@ impl Neg for Value {
     fn neg(self) -> Self::Output {
         match self {
             Value::Number(a) => Value::Number(-a),
-            _ => todo!(),
+            _ => panic!("Operand must be a number."),
         }
     }
 }

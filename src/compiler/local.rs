@@ -62,20 +62,6 @@ impl Locals {
         self.stack[index].initialized = true;
     }
 
-    pub fn get(&self, ident: &str) -> Option<&Local> {
-        self.stack.iter().find(|l| l.name == ident)
-    }
-
-    pub fn get_at_current_depth(&self, ident: &str) -> Option<&Local> {
-        self.get_at_depth(ident, self.scope_depth)
-    }
-
-    pub fn get_at_depth(&self, ident: &str, depth: usize) -> Option<&Local> {
-        self.stack
-            .iter()
-            .find(|l| l.name == ident && l.depth == depth)
-    }
-
     pub fn insert(&mut self, ident: &str) -> Option<&Local> {
         // TODO: Maybe Result<&Local, ()> instead
         if let Some(_) = self.get_at_depth(&ident, self.scope_depth) {
@@ -89,5 +75,19 @@ impl Locals {
             });
             self.stack.last()
         }
+    }
+
+    pub fn get(&self, ident: &str) -> Option<&Local> {
+        self.stack.iter().find(|l| l.name == ident)
+    }
+
+    pub fn get_at_current_depth(&self, ident: &str) -> Option<&Local> {
+        self.get_at_depth(ident, self.scope_depth)
+    }
+
+    pub fn get_at_depth(&self, ident: &str, depth: usize) -> Option<&Local> {
+        self.stack
+            .iter()
+            .find(|l| l.name == ident && l.depth == depth)
     }
 }

@@ -13,12 +13,15 @@ pub struct CompilerInstance {
 
 impl CompilerInstance {
     pub fn new(function_type: FunctionType) -> Self {
-        CompilerInstance {
+        let mut  instance = CompilerInstance {
             function: Function::new(),
             function_type,
             locals: Locals::new(),
             enclosing: Box::new(None),
-        }
+        };
+        instance.locals_mut().insert(""); // TODO:
+
+        instance
     }
 
     pub fn resolve_local(&self, name: &str) -> CompileResult<Option<StackIndex>> {
