@@ -5,9 +5,11 @@ mod compiler;
 mod lexer;
 mod parser;
 mod vm;
+mod typesystem;
 
 pub fn run_repl() {
     loop {
+        print!(">>>");
         interpret(&read_line());
     }
 }
