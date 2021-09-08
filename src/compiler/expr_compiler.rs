@@ -166,7 +166,7 @@ fn compile_if_else(
 ) {
     compile_expr(compiler, *condition);
 
-    // Jump to else clause if false.
+    // Jump to else clause if false
     let then_jump = compiler.emit_jump(Opcode::JumpIfFalse);
     compiler.emit(Opcode::Pop);
 
@@ -179,7 +179,6 @@ fn compile_if_else(
     compiler.patch_jump(then_jump);
     compiler.emit(Opcode::Pop);
 
-    // Compile else clause if set.
     if let Some(exprs) = else_ {
         for expr in exprs {
             compile_expr(compiler, expr);
