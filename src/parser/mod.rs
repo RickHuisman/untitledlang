@@ -14,7 +14,19 @@ pub fn parse<'a>(tokens: &'a mut Vec<Token<'a>>) -> ParserResult<ModuleAst> {
     let mut parser = Parser::new(tokens);
 
     let mut ast = vec![];
-    while !(parser.is_eof()?) {
+
+    // TODO: Cleanup.
+    loop {
+        if parser.is_eof()? {
+            break;
+        }
+
+        parser.skip_lines();
+
+        if parser.is_eof()? {
+            break;
+        }
+
         ast.push(parser.parse_top_level_expr()?);
     }
 

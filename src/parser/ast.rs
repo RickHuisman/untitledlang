@@ -98,7 +98,7 @@ impl Expr {
         }
     }
 
-    pub fn fun(ident: Identifier, decl: FunDecl) -> Self {
+    pub fn def(ident: Identifier, decl: FunDecl) -> Self {
         Expr::Fun { ident, decl }
     }
 

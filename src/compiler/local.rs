@@ -3,12 +3,20 @@ pub struct Local {
     name: String,
     depth: usize,
     initialized: bool,
-    slot: usize, // TODO: What is slot used for?
+    slot: usize,
 }
 
 impl Local {
+    pub fn new(name: String, depth: usize, initialized: bool, slot: usize) -> Self {
+        Local {
+            name,
+            depth,
+            initialized,
+            slot,
+        }
+    }
+
     pub fn slot(&self) -> usize {
-        // TODO: StackIndex?
         self.slot
     }
 
@@ -62,32 +70,26 @@ impl Locals {
         self.stack[index].initialized = true;
     }
 
-    pub fn insert(&mut self, ident: &str) -> Option<&Local> {
-        // TODO: Maybe Result<&Local, ()> instead
-        if let Some(_) = self.get_at_depth(&ident, self.scope_depth) {
-            return None;
-        } else {
-            self.stack.push(Local {
-                name: ident.to_string(),
-                depth: self.scope_depth,
-                slot: self.stack.len(),
-                initialized: false,
-            });
-            self.stack.last()
+    pub fn insert(&mut self, ident: &str) {
+        if self.get_at_depth(&ident, self.scope_depth).is_some() {
+            return;
         }
-    }
 
-    pub fn get(&self, ident: &str) -> Option<&Local> {
-        self.stack.iter().find(|l| l.name == ident)
-    }
-
-    pub fn get_at_current_depth(&self, ident: &str) -> Option<&Local> {
-        self.get_at_depth(ident, self.scope_depth)
+        let local = Local::new(ident.to_string(), self.scope_depth, false, self.stack.len());
+        self.stack.push(local);
     }
 
     pub fn get_at_depth(&self, ident: &str, depth: usize) -> Option<&Local> {
         self.stack
             .iter()
             .find(|l| l.name == ident && l.depth == depth)
+    }
+
+    pub fn get_at_current_depth(&self, ident: &str) -> Option<&Local> {
+        self.get_at_depth(ident, self.scope_depth)
+    }
+
+    pub fn get(&self, ident: &str) -> Option<&Local> {
+        self.stack.iter().find(|l| l.name == ident)
     }
 }

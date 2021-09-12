@@ -111,8 +111,10 @@ mod tests {
     }
 
     fn run_test_file(path: String) {
-        let source = fs::read_to_string(path).unwrap();
-        harness(&source);
+        match fs::read_to_string(path) {
+            Ok(source) => harness(&source),
+            Err(e) => println!("{}", e),
+        }
     }
 
     #[test]

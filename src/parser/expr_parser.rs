@@ -104,7 +104,7 @@ fn parse_primary(parser: &mut Parser) -> ParseResult<Expr> {
         TokenType::Identifier => {
             let ident = token.source().to_string();
 
-            Ok(if parser.match_(&TokenType::Equal)? {
+            Ok(if parser.match_(TokenType::Equal)? {
                 let expr = parser.expression()?;
                 Expr::let_set(ident, expr)
             } else {
@@ -119,9 +119,9 @@ fn parse_call(parser: &mut Parser, left: Expr) -> ParseResult<Expr> {
     parser.expect(TokenType::LeftParen)?;
 
     let mut args = vec![];
-    if !parser.check(&TokenType::RightParen)? {
+    if !parser.check(TokenType::RightParen)? {
         args.push(parser.expression()?);
-        while parser.match_(&TokenType::Comma)? {
+        while parser.match_(TokenType::Comma)? {
             args.push(parser.expression()?);
         }
     }

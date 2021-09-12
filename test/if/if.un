@@ -1,8 +1,8 @@
 // Evaluate the 'then' expression if the condition is true.
-if true { print "good"; } // expect: good
-if false { print "bad"; }
+if true do print("good") end // expect: good
+if false do print("bad") end
 
 // Allow block body.
-if true { print "block"; } // expect: block
+if true do print("block") end // expect: block
 
 // TODO: Assignment in if condition.

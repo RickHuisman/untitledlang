@@ -4,7 +4,7 @@ use crate::parser::error::{ParseResult, ParserError};
 use crate::parser::expr_parser;
 
 pub struct Parser<'a> {
-    tokens: &'a mut Vec<Token<'a>>,
+    pub tokens: &'a mut Vec<Token<'a>>, // TODO: Remove pub.
 }
 
 impl<'a> Parser<'a> {
@@ -15,37 +15,37 @@ impl<'a> Parser<'a> {
 
     pub fn parse_top_level_expr(&mut self) -> ParseResult<Expr> {
         match self.peek_type()? {
-            TokenType::Let => self.declare_let(),
-            TokenType::Fun => self.parse_fun(),
+            TokenType::Let => self.parse_let(),
+            TokenType::Def => self.parse_def(),
             TokenType::While => self.parse_while(),
             TokenType::For => self.parse_for(),
             TokenType::If => self.parse_if(),
             TokenType::Print => self.parse_print(),
-            TokenType::LeftBrace => self.parse_block(),
+            TokenType::Do => self.parse_block(),
             TokenType::Return => self.parse_return(),
             _ => self.parse_expression_statement(),
         }
     }
 
-    fn declare_let(&mut self) -> ParseResult<Expr> {
+    fn parse_let(&mut self) -> ParseResult<Expr> {
         // Consume "let".
         self.expect(TokenType::Let)?;
 
         let ident = self.parse_ident()?;
 
-        let initializer = if self.match_(&TokenType::Equal)? {
+        let initializer = if self.match_(TokenType::Equal)? {
             self.parse_expression_statement()?
         } else {
-            self.expect(TokenType::Semicolon)?;
+            self.expect(TokenType::Line)?;
             Expr::Literal(LiteralExpr::Nil)
         };
 
         Ok(Expr::let_assign(ident, initializer))
     }
 
-    fn parse_fun(&mut self) -> ParseResult<Expr> {
-        // Consume "fun".
-        self.expect(TokenType::Fun)?;
+    fn parse_def(&mut self) -> ParseResult<Expr> {
+        // Consume "def".
+        self.expect(TokenType::Def)?;
 
         let ident = self.parse_ident()?;
 
@@ -53,10 +53,12 @@ impl<'a> Parser<'a> {
         let args = self.parse_args()?;
         self.expect(TokenType::RightParen)?;
 
+        self.expect(TokenType::Line)?;
+
         let body = self.block()?;
         let fun_decl = FunDecl::new(args, body);
 
-        Ok(Expr::fun(ident, fun_decl))
+        Ok(Expr::def(ident, fun_decl))
     }
 
     fn parse_while(&mut self) -> ParseResult<Expr> {
@@ -78,12 +80,31 @@ impl<'a> Parser<'a> {
         self.expect(TokenType::If)?;
 
         let cond = self.expression()?;
-        let then = self.block()?;
-        let else_clause = if self.match_(&TokenType::Else)? {
+
+        self.expect(TokenType::Do)?;
+        self.match_(TokenType::Line)?;
+
+        // Then
+        let mut then = vec![];
+        loop {
+            if self.match_(TokenType::End)? {
+                break;
+            }
+            if self.check(TokenType::Else)? {
+                break;
+            }
+
+            then.push(self.parse_top_level_expr()?);
+        }
+
+        let else_clause = if self.match_(TokenType::Else)? {
+            self.match_(TokenType::Line)?;
             Some(self.block()?)
         } else {
             None
         };
+
+        self.match_(TokenType::Line)?;
 
         Ok(Expr::if_else(cond, then, else_clause))
     }
@@ -99,13 +120,15 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_block(&mut self) -> ParseResult<Expr> {
+        self.expect(TokenType::Do)?;
+        self.match_(TokenType::Line)?;
         Ok(Expr::block(self.block()?))
     }
 
     fn parse_return(&mut self) -> ParseResult<Expr> {
         self.expect(TokenType::Return)?;
 
-        let expr = if self.match_(&TokenType::Semicolon)? {
+        let expr = if self.match_(TokenType::Line)? {
             // return;
             None
         } else {
@@ -118,10 +141,10 @@ impl<'a> Parser<'a> {
 
     pub fn parse_args(&mut self) -> ParseResult<Vec<Identifier>> {
         let mut params = vec![];
-        while !self.check(&TokenType::RightParen)? && !self.check(&TokenType::EOF)? {
+        while !self.check(TokenType::RightParen)? && !self.check(TokenType::EOF)? {
             params.push(self.parse_ident()?);
 
-            if !self.match_(&TokenType::Comma)? {
+            if !self.match_(TokenType::Comma)? {
                 break;
             }
         }
@@ -130,16 +153,13 @@ impl<'a> Parser<'a> {
 
     pub fn parse_expression_statement(&mut self) -> ParseResult<Expr> {
         let expr = self.expression()?;
-        self.expect(TokenType::Semicolon)?;
+        self.match_(TokenType::Line)?;
         Ok(expr)
     }
 
     fn block(&mut self) -> ParseResult<BlockDecl> {
-        // Consume '{'.
-        self.expect(TokenType::LeftBrace)?;
-
         let mut exprs = vec![];
-        while !self.match_(&TokenType::RightBrace)? {
+        while !self.match_(TokenType::End)? {
             exprs.push(self.parse_top_level_expr()?);
         }
 
@@ -151,14 +171,15 @@ impl<'a> Parser<'a> {
     }
 
     pub fn expect(&mut self, expect: TokenType) -> ParseResult<Token<'a>> {
-        if self.check(&expect)? {
+        if self.check(expect.clone())? {
+            // TODO: Clone
             return Ok(self.consume()?);
         }
 
         Err(ParserError::Expected(
-            expect,
-            self.peek_type()?.clone(),              // TODO Clone
-            self.peek()?.position().line().clone(), // TODO Clone
+            expect.clone(),                         // TODO: Clone
+            self.peek_type()?.clone(),              // TODO: Clone
+            self.peek()?.position().line().clone(), // TODO: Clone
         ))
     }
 
@@ -174,7 +195,7 @@ impl<'a> Parser<'a> {
         Ok(self.peek()?.token_type())
     }
 
-    pub fn match_(&mut self, token_type: &TokenType) -> ParseResult<bool> {
+    pub fn match_(&mut self, token_type: TokenType) -> ParseResult<bool> {
         if !self.check(token_type)? {
             return Ok(false);
         }
@@ -183,12 +204,20 @@ impl<'a> Parser<'a> {
         Ok(true)
     }
 
-    pub fn check(&self, token_type: &TokenType) -> ParseResult<bool> {
-        Ok(self.peek_type()? == token_type)
+    pub fn check(&self, token_type: TokenType) -> ParseResult<bool> {
+        Ok(self.peek_type()? == &token_type)
+    }
+
+    // TODO: Cleanup.
+    pub fn skip_lines(&mut self) {
+        while self.check(TokenType::Line).unwrap() {
+            // TODO Unwrap
+            self.consume();
+        }
     }
 
     pub fn is_eof(&self) -> ParseResult<bool> {
-        Ok(self.check(&TokenType::EOF)?)
+        Ok(self.check(TokenType::EOF)?)
     }
 }
 
@@ -196,6 +225,7 @@ impl<'a> Parser<'a> {
 mod tests {
     use super::*;
     use crate::lexer::lex;
+    use crate::parser::ast::Expr::Literal;
     use crate::parser::parse;
 
     fn run_test(expect: Vec<Expr>, source: &str) {
@@ -212,7 +242,7 @@ mod tests {
             Expr::Literal(LiteralExpr::Number(5.0)),
         )];
 
-        let source = "let x = 5;";
+        let source = "let x = 5";
         run_test(expect, source);
     }
 
@@ -223,7 +253,7 @@ mod tests {
             Expr::Literal(LiteralExpr::Number(5.0)),
         )];
 
-        let source = "x = 5;";
+        let source = "x = 5";
         run_test(expect, source);
     }
 
@@ -234,7 +264,29 @@ mod tests {
             Expr::let_assign("y".to_string(), Expr::let_get("x".to_string())),
         ];
 
-        let source = "let x = 5; let y = x;";
+        let source = r#"
+        let x = 5
+        let y = x
+        "#;
+        run_test(expect, source);
+    }
+
+    #[test]
+    fn parse_while() {
+        let expect = vec![Expr::while_(
+            Expr::binary(
+                Expr::let_get("x".to_string()),
+                BinaryOperator::LessThan,
+                Expr::Literal(LiteralExpr::Number(5_f64)),
+            ),
+            Expr::block(vec![Expr::print(Expr::let_get("x".to_string()))]),
+        )];
+
+        let source = r#"
+        while x < 5 do
+            print x
+        end
+        "#;
         run_test(expect, source);
     }
 
@@ -246,10 +298,10 @@ mod tests {
         ])];
 
         let source = r#"
-        {
-            let x = 5;
-            let y = x;
-        }
+        do
+            let x = 5
+            let y = x
+        end
         "#;
         run_test(expect, source);
     }
@@ -262,7 +314,81 @@ mod tests {
             Expr::Literal(LiteralExpr::Number(4.0)),
         ))];
 
-        let source = r#"(2 + 4);"#;
+        let source = r#"(2 + 4)"#;
+        run_test(expect, source);
+    }
+
+    #[test]
+    fn parse_if() {
+        let expect = vec![Expr::if_else(
+            Expr::binary(
+                Expr::let_get("x".to_string()),
+                BinaryOperator::LessThan,
+                Expr::Literal(LiteralExpr::Number(5_f64)),
+            ),
+            vec![Expr::return_(Some(Expr::Literal(LiteralExpr::True)))],
+            None,
+        )];
+
+        let source = r#"
+        if x < 5 do
+            return true
+        end"#;
+        run_test(expect, source);
+    }
+
+    #[test]
+    fn parse_if_else() {
+        let expect = vec![Expr::if_else(
+            Expr::binary(
+                Expr::let_get("x".to_string()),
+                BinaryOperator::LessThan,
+                Expr::Literal(LiteralExpr::Number(5_f64)),
+            ),
+            vec![Expr::return_(Some(Expr::Literal(LiteralExpr::True)))],
+            Some(vec![Expr::return_(Some(Expr::Literal(LiteralExpr::False)))]),
+        )];
+
+        let source = r#"
+        if x < 5 do
+            return true
+        else
+            return false
+        end"#;
+        run_test(expect, source);
+    }
+
+    #[test]
+    fn parse_return() {
+        let expect = vec![Expr::return_(None)];
+
+        let source = "return";
+        run_test(expect, source);
+    }
+
+    #[test]
+    fn parse_return_value() {
+        let expect = vec![Expr::return_(Some(Expr::Literal(LiteralExpr::True)))];
+
+        let source = "return true";
+        run_test(expect, source);
+    }
+
+    #[test]
+    fn parse_def() {
+        let expect = vec![Expr::def(
+            "foo".to_string(),
+            FunDecl::new(
+                vec![],
+                vec![Expr::return_(Some(Expr::Literal(LiteralExpr::True)))],
+            ),
+        )];
+
+        let source = r#"
+        def foo()
+            return true
+        end
+        "#;
         run_test(expect, source);
     }
 }

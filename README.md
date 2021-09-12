@@ -10,36 +10,36 @@ y = 5
 
 # Functions
 ```
-fun greet(name: String) {
-	print("Hello, $name!");
-}
+def greet(name: String)
+	print("Hello, $name!")
+end
 
-greet("John"); // Prints "Hello, John!"
+greet("John") // Prints "Hello, John!"
 
-fun double(x: int): int {
+def double(x: int): int
 	x * 2
-}
+end
 
-print(double(5)); // Prints "10"
+print(double(5)) // Prints "10"
 ```
 
 # Classes
 ```
-class Rectangle (var width: int, var height: int);
+class Rectangle (var width: int, var height: int)
 
 // Class method
-fun (Rectangle) new(width: int, height: int): Rectangle {
+def (Rectangle) new(width: int, height: int): Rectangle
 	Rectangle { width: 5, height: 5}
-}
+end
 
 val rect = Rectangle.new(5, 5)
 ```
 
 # Traits
 ```
-trait Show {
+trait Show
 	fun show(f: A): String
-}
+end
 ```
 
 # Algebraic datatypes
@@ -50,8 +50,6 @@ enum Color
 	GREEN,
 end
 ```
-
-
 
 ## Examples
 ```
