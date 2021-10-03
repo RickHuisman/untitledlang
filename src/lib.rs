@@ -6,6 +6,10 @@ mod lexer;
 mod parser;
 mod vm;
 
+pub fn interpret_(s: &str) {
+    interpret(s);
+}
+
 pub fn run_repl() {
     loop {
         interpret(&read_line());

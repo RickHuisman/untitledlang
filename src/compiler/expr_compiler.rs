@@ -121,7 +121,7 @@ fn compile_closure(compiler: &mut Compiler, ident: &Identifier, decl: FunDecl) {
     }
 
     // Compile body.
-    compile_expr(compiler, Expr::block(decl.body())); // TODO: Create new Block expr?
+    compile_expr(compiler, Expr::block(decl.body()));
 
     // Create the function object.
     let mut fun = compiler.end_compiler();

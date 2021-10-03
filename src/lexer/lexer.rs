@@ -82,7 +82,7 @@ impl<'a> Lexer<'a> {
                     TokenType::Equal
                 }
             }
-            ';' | '\n' | '\r' => TokenType::Line,
+            ';' => TokenType::Semicolon,
             '"' => return self.string(start),
             _ => todo!(), // TODO: ???
         };
@@ -164,7 +164,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        self.advance_while(|&c| c == ' ' || c == '\t');
+        self.advance_while(|&c| c == ' ' || c == '\t' || c == '\n' || c == '\r');
     }
 
     fn advance_while<F>(&mut self, f: F) -> usize
@@ -232,7 +232,6 @@ mod tests {
             Token::new(TokenType::Number, "2", Position::new(0, 1, 1)),
             Token::new(TokenType::Number, "10", Position::new(2, 4, 1)),
             Token::new(TokenType::Number, "3.33", Position::new(5, 9, 1)),
-            Token::new(TokenType::Line, "", Position::new(9, 9, 1)),
             Token::new(TokenType::EOF, "", Position::new(9, 9, 1)),
         ];
 
@@ -248,7 +247,6 @@ mod tests {
             Token::new(TokenType::String, "Hello", Position::new(1, 6, 1)),
             Token::new(TokenType::String, ",", Position::new(9, 10, 1)),
             Token::new(TokenType::String, "World!", Position::new(13, 19, 1)),
-            Token::new(TokenType::Line, "", Position::new(20, 20, 1)),
             Token::new(TokenType::EOF, "", Position::new(20, 20, 1)),
         ];
 
@@ -288,7 +286,6 @@ mod tests {
     fn lex_comments() {
         let expect = vec![
             Token::new(TokenType::Number, "2", Position::new(0, 1, 1)),
-            Token::new(TokenType::Line, "", Position::new(34, 34, 1)),
             Token::new(TokenType::EOF, "", Position::new(34, 34, 1)),
         ];
 

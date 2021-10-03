@@ -119,12 +119,14 @@ fn parse_call(parser: &mut Parser, left: Expr) -> ParseResult<Expr> {
     parser.expect(TokenType::LeftParen)?;
 
     let mut args = vec![];
-    if !parser.check(TokenType::RightParen)? {
+    while !parser.check(TokenType::RightParen)? && !parser.check(TokenType::EOF)? {
         args.push(parser.expression()?);
-        while parser.match_(TokenType::Comma)? {
-            args.push(parser.expression()?);
+
+        if !parser.match_(TokenType::Comma)? {
+            break;
         }
     }
+
     parser.expect(TokenType::RightParen)?;
 
     Ok(Expr::call(left, args))
@@ -149,7 +151,7 @@ fn parse_unary(parser: &mut Parser) -> ParseResult<Expr> {
 
 fn parse_grouping(parser: &mut Parser) -> ParseResult<Expr> {
     parser.expect(TokenType::LeftParen)?;
-    let expr = parse_expr(parser, Precedence::None)?;
+    let expr = parse(parser)?;
     parser.expect(TokenType::RightParen)?;
 
     Ok(Expr::grouping(expr))

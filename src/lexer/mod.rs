@@ -1,11 +1,9 @@
 use crate::lexer::error::LexResult;
 use crate::lexer::lexer::Lexer;
-use crate::lexer::morph::morph;
 use crate::lexer::token::{Token, TokenType};
 
 pub mod error;
 mod lexer;
-mod morph;
 pub mod token;
 
 pub fn lex(source: &str) -> LexResult<Vec<Token>> {
@@ -23,5 +21,5 @@ pub fn lex(source: &str) -> LexResult<Vec<Token>> {
         }
     }
 
-    Ok(morph(tokens))
+    Ok(tokens)
 }

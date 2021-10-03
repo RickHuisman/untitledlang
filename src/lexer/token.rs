@@ -60,11 +60,9 @@ pub enum TokenType {
 
     // Keywords
     Let,
-    Do,
-    End,
     True,
     False,
-    Def,
+    Fun,
     While,
     For,
     If,
@@ -74,7 +72,6 @@ pub enum TokenType {
 
     Identifier,
 
-    Line,
     EOF,
 }
 
@@ -86,11 +83,9 @@ impl ToKeyword for &str {
     fn to_keyword(self) -> Option<TokenType> {
         Some(match self {
             "let" => TokenType::Let,
-            "do" => TokenType::Do,
-            "end" => TokenType::End,
             "true" => TokenType::True,
             "false" => TokenType::False,
-            "def" => TokenType::Def,
+            "fun" => TokenType::Fun,
             "while" => TokenType::While,
             "for" => TokenType::For,
             "if" => TokenType::If,
